@@ -127,7 +127,7 @@ export class DAMI {
     });
     eventString += `\r\n`;
     if (this.conn) {
-      this.log("Sending event " + eventString, "info")
+      this.log("Sending event " + eventString, "info");
       await this.conn.write(new TextEncoder().encode(eventString));
     }
   }
@@ -243,9 +243,9 @@ export class DAMI {
     if (event) {
       if (this.listeners.has(event)) {
         this.log("Calling listener for " + event, "info");
-        const listener = this.listeners.get(event)
+        const listener = this.listeners.get(event);
         if (listener) {
-          listener(data)
+          listener(data);
         }
       } else {
         this.log(
