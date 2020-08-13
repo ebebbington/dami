@@ -121,12 +121,13 @@ export class DAMI {
    * @param data - The data to send across, in key value pairs
    */
   public async to(eventName: string, data: DAMIData): Promise<void> {
-    let eventString = `Event: ${eventName}\r\n`;
+    let eventString = `Action: ${eventName}\r\n`;
     Object.keys(data).forEach((key) => {
       eventString += `${key}: ${data[key]}\r\n`;
     });
     eventString += `\r\n`;
     if (this.conn) {
+      this.log("Sending event " + eventString, "info")
       await this.conn.write(new TextEncoder().encode(eventString));
     }
   }
@@ -237,11 +238,16 @@ export class DAMI {
    * @param chunk - Response from AMI
    */
   private async handleAMIResponse(chunk: Uint8Array): Promise<void> {
-    const data = this.formatAMIResponse(chunk);
-    for (let [eventName, cb] of this.listeners) {
-      if (data["Event"] === eventName) {
+    const data: DAMIData = this.formatAMIResponse(chunk);
+    const event: string =. data["Event"].toString();
+    if (event) {
+
+      if (this.listeners.has(event)) {
         this.log("Calling listener for " + eventName, "info");
-        cb(data);
+        const listener = this.listeners.get(event)
+        if (listener) {
+          listener(data)
+        }
       } else {
         this.log(
           "No listener is set for the event `" + eventName + "`",
