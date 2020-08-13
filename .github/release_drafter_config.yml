@@ -1,0 +1,29 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+change-template: '- $TITLE (#$NUMBER)'
+version-resolver:
+  major:
+    labels:
+      - 'major'
+  minor:
+    labels:
+      - 'minor'
+  patch:
+    labels:
+      - 'patch'
+  default: patch
+template: |
+  __Compatibility__
+
+  * Requires Deno v<DENO_VERSION> or higher
+  * Uses Deno std@<STD_VERSION>
+
+  __Importing__
+
+  * Import this latest release by using the following in your project(s):
+    ```typescript
+    import { DAMI } from "https://deno.land/x/dami@v$RESOLVED_VERSION/mod.ts";
+    ```
+  __Updates__
+
+  $CHANGES
