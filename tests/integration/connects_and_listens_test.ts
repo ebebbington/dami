@@ -1,5 +1,5 @@
-import {DAMI} from "../../src/dami.ts";
-import {Rhum} from "../deps.ts";
+import { DAMI } from "../../src/dami.ts";
+import { Rhum } from "../deps.ts";
 
 const ami = {
   hostname: "0.0.0.0",
@@ -18,21 +18,21 @@ Deno.test({
   sanitizeResources: false,
   async fn(): Promise<void> {
     // Assert connection and login
-    const Dami = new DAMI(ami)
-    await Dami.connectAndLogin(auth)
+    const Dami = new DAMI(ami);
+    await Dami.connectAndLogin(auth);
     await Dami.listen();
-    let res: any  = {}
+    let res: any = {};
     Dami.on("FullyBooted", (data) => {
-      res = data
-      Dami.close()
-    })
+      res = data;
+      Dami.close();
+    });
     await setTimeout(() => {
-      Rhum.asserts.assertEquals(res.Event, "FullyBooted")
-      Rhum.asserts.assertEquals(res.Message, "Authentication accepted")
-      Dami.close()
+      Rhum.asserts.assertEquals(res.Event, "FullyBooted");
+      Rhum.asserts.assertEquals(res.Message, "Authentication accepted");
+      Dami.close();
     }, 2000);
-  }
-})
+  },
+});
 
 Deno.test({
   name: "Can send events",
@@ -40,19 +40,19 @@ Deno.test({
   sanitizeResources: false,
   async fn(): Promise<void> {
     // Assert sending  events
-    const Dami = new DAMI(ami)
-    await Dami.connectAndLogin(auth)
+    const Dami = new DAMI(ami);
+    await Dami.connectAndLogin(auth);
     await Dami.listen();
-    let res: any  = {}
+    let res: any = {};
     Dami.on("PeerlistComplete", (data) => {
-      res = data
-      Dami.close()
-    })
-    await Dami.to("SIPPeers", {})
+      res = data;
+      Dami.close();
+    });
+    await Dami.to("SIPPeers", {});
     await setTimeout(() => {
-      Rhum.asserts.assertEquals(res.Event, "PeerlistComplete")
-      Rhum.asserts.assertEquals(res.Message, "Peer status list will follow")
-      Dami.close()
+      Rhum.asserts.assertEquals(res.Event, "PeerlistComplete");
+      Rhum.asserts.assertEquals(res.Message, "Peer status list will follow");
+      Dami.close();
     }, 2000);
-  }
-})
+  },
+});
