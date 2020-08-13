@@ -30,7 +30,7 @@ DAMI can connect (using Deno) to an Asterisk AMI, and can start sending events, 
 
 ## Projects Using DAMI
 
-- [Chatsterisk] - My own personal learning project. It uses DAMI to aid in making SIP calls through the browser.
+- [Chatsterisk](https://github.com/ebebbington/chatsterisk/src/ami/app.ts) - My own personal learning project. It uses DAMI to aid in making SIP calls through the browser.
 
 ## QuickStart
 
