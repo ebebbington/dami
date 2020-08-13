@@ -90,15 +90,13 @@ export class DAMI {
       if (this.conn) {
         this.conn.close();
       }
-    } catch  (err) {
-
+    } catch (err) {
     }
     try {
-      if  (this.duplex_conn) {
-        this.duplex_conn.close()
+      if (this.duplex_conn) {
+        this.duplex_conn.close();
       }
     } catch (err) {
-
     }
   }
 
@@ -185,7 +183,6 @@ export class DAMI {
           try {
             this.conn.close();
           } catch (err) {
-
           }
         }
       }
@@ -255,7 +252,7 @@ export class DAMI {
   private async handleAMIResponse(chunk: Uint8Array): Promise<void> {
     const data: DAMIData = this.formatAMIResponse(chunk);
     if (!data["Event"]) {
-      return
+      return;
     }
     const event: string = data["Event"].toString();
     if (event) {
