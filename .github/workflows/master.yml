@@ -28,7 +28,6 @@ jobs:
         run: deno test --allow-net tests/integration
 
   linter:
-    strategy:
     runs-on: ubuntu-latest
 
     steps:
