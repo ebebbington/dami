@@ -22,7 +22,7 @@ Rhum.testPlan("tests/unit/dami.ts", () => {
     Rhum.testCase("Closes the connection", () => {
     });
   });
-  Rhum.testCase("connectAndLogin()", () => {
+  Rhum.testSuite("connectAndLogin()", () => {
     Rhum.testCase("Throws an error when `conn` is already set", () => {
     });
     Rhum.testCase("Successfully connects and logs in to the AMI", () => {

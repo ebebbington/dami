@@ -5,7 +5,7 @@ Rhum.testPlan("tests/integration/connects_and_listens_test.ts", () => {
     Rhum.testCase("Makes a successful connection", () => {
     });
   });
-  Rhum.testCase("Login", () => {
+  Rhum.testSuite("Login", () => {
     Rhum.testCase("Can login and become authorised", () => {
     });
   });
