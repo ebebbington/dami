@@ -86,8 +86,17 @@ export class DAMI {
    */
   public close() {
     this.log("Closing connection", "info");
-    if (this.conn) {
-      this.conn.close();
+    try {
+      if (this.conn) {
+        this.conn.close();
+      }
+    } catch (err) {
+    }
+    try {
+      if (this.duplex_conn) {
+        this.duplex_conn.close();
+      }
+    } catch (err) {
     }
   }
 
@@ -171,7 +180,10 @@ export class DAMI {
           "error",
         );
         if (this.conn) {
-          this.conn.close();
+          try {
+            this.conn.close();
+          } catch (err) {
+          }
         }
       }
     })();
@@ -239,17 +251,20 @@ export class DAMI {
    */
   private async handleAMIResponse(chunk: Uint8Array): Promise<void> {
     const data: DAMIData = this.formatAMIResponse(chunk);
-    const action: string = data["Action"].toString();
-    if (action) {
-      if (this.listeners.has(action)) {
-        this.log("Calling listener for " + action, "info");
-        const listener = this.listeners.get(action);
+    if (!data["Event"]) {
+      return;
+    }
+    const event: string = data["Event"].toString();
+    if (event) {
+      if (this.listeners.has(event)) {
+        this.log("Calling listener for " + event, "info");
+        const listener = this.listeners.get(event);
         if (listener) {
           listener(data);
         }
       } else {
         this.log(
-          "No listener is set for the event `" + action + "`",
+          "No listener is set for the event `" + event + "`",
           "info",
         );
       }
