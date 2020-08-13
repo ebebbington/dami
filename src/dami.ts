@@ -3,22 +3,22 @@
  * Port of the server to connect to
  */
 interface IConfigs {
-  hostname?: string,
-  port: number,
-  logger?: boolean
+  hostname?: string;
+  port: number;
+  logger?: boolean;
 }
 
-type LogLevels = "error" | "info" | "log"
+type LogLevels = "error" | "info" | "log";
 
 export interface DAMIData {
-   [key: string]: string|number
+  [key: string]: string | number;
 }
 
 const defaultConfigs = {
   hostname: "localhost",
   port: 3000,
-  logger: true
-}
+  logger: true,
+};
 
 export class DenoTcpDuplexConnection {
   conn: Deno.Conn;
@@ -61,33 +61,33 @@ export class DAMI {
   /**
    * The connection to the AMI
    */
-  public conn: Deno.Conn|null = null
+  public conn: Deno.Conn | null = null;
 
   /**
    * Similar to type `this.conn`, but uses to listen for messages
    */
-  private duplex_conn: DuplexConnection | undefined
+  private duplex_conn: DuplexConnection | undefined;
 
   /**
    * Holds all events user wishes to listen on, where `string` is the event name
    */
-  private listeners: Map<string, Function>
+  private listeners: Map<string, Function>;
 
   /**
    * @param configs - Hostname and port of the AMI to connect to
    */
   constructor(configs: IConfigs = defaultConfigs) {
-    this.configs = configs
-    this.listeners = new Map()
+    this.configs = configs;
+    this.listeners = new Map();
   }
 
   /**
    * Closes the connection
    */
-  public close () {
-    this.log("Closing connection", "info")
+  public close() {
+    this.log("Closing connection", "info");
     if (this.conn) {
-      this.conn.close()
+      this.conn.close();
     }
   }
 
@@ -96,15 +96,22 @@ export class DAMI {
    *
    * @param auth - Username and secret to use in the login event
    */
-  public async connectAndLogin (auth: { username: string, secret: string}): Promise<void> {
+  public async connectAndLogin(
+    auth: { username: string; secret: string },
+  ): Promise<void> {
     if (!this.conn) {
-      this.conn = await Deno.connect({hostname: this.configs.hostname, port: this.configs.port});
-      this.duplex_conn =  new DenoTcpDuplexConnection(this.conn);
-      this.log(`Connected to ${this.configs.hostname}:${this.configs.port}`, "info")
-      await this.login(auth)
-      return
+      this.conn = await Deno.connect(
+        { hostname: this.configs.hostname, port: this.configs.port },
+      );
+      this.duplex_conn = new DenoTcpDuplexConnection(this.conn);
+      this.log(
+        `Connected to ${this.configs.hostname}:${this.configs.port}`,
+        "info",
+      );
+      await this.login(auth);
+      return;
     }
-    throw new Error("A connection has already been made")
+    throw new Error("A connection has already been made");
   }
 
   /**
@@ -113,10 +120,10 @@ export class DAMI {
    * @param eventName - The name of the event
    * @param data - The data to send across, in key value pairs
    */
-  public async to (eventName: string, data: DAMIData): Promise<void> {
-    let eventString = `Event: ${eventName}\r\n`
-    Object.keys(data).forEach(key => {
-      eventString += `${key}: ${data[key]}\r\n`
+  public async to(eventName: string, data: DAMIData): Promise<void> {
+    let eventString = `Event: ${eventName}\r\n`;
+    Object.keys(data).forEach((key) => {
+      eventString += `${key}: ${data[key]}\r\n`;
     });
     eventString += `\r\n`;
     if (this.conn) {
@@ -130,37 +137,43 @@ export class DAMI {
    * @param eventName - Event name to listen for
    * @param cb - Your callback, which is called with the AMI data
    */
-  public on (eventName: string, cb: (data: DAMIData) => void): void {
-    this.listeners.set(eventName, cb)
+  public on(eventName: string, cb: (data: DAMIData) => void): void {
+    this.listeners.set(eventName, cb);
   }
 
   /**
    * Listens for any events from the AMI and does ?? with them
    */
-  public async listen (): Promise<void> {
+  public async listen(): Promise<void> {
     (async () => {
       try {
         if (this.duplex_conn) {
           for await (const chunk of this.duplex_conn) {
             if (!chunk) {
-              this.log("Invalid response from event received from the AMI. Closing connection", "error")
+              this.log(
+                "Invalid response from event received from the AMI. Closing connection",
+                "error",
+              );
               if (this.conn) {
-                this.conn.close()
+                this.conn.close();
               }
               break;
             } else {
-              this.log("Received event from the AMI", "info")
-              this.handleAMIResponse(chunk)
+              this.log("Received event from the AMI", "info");
+              this.handleAMIResponse(chunk);
             }
           }
         }
       } catch (e) {
-        this.log("Connection failed whilst receiving an event from the AMI. Closing connection", "error")
+        this.log(
+          "Connection failed whilst receiving an event from the AMI. Closing connection",
+          "error",
+        );
         if (this.conn) {
           this.conn.close();
         }
       }
-    })()
+    })();
   }
 
   /**
@@ -168,12 +181,18 @@ export class DAMI {
    *
    * @param auth - Username and secret of the account to login as
    */
-  private async login (auth: { username: string, secret: string }): Promise<void> {
-    const username = auth.username
-    const secret = auth.secret
+  private async login(
+    auth: { username: string; secret: string },
+  ): Promise<void> {
+    const username = auth.username;
+    const secret = auth.secret;
     if (this.conn) {
-      await this.conn.write(new TextEncoder().encode(`action: Login\r\nusername: ${username}\r\nsecret: ${secret}\r\n\r\n`));
-      this.log(`Authenticated, and logged in`, "info")
+      await this.conn.write(
+        new TextEncoder().encode(
+          `action: Login\r\nusername: ${username}\r\nsecret: ${secret}\r\n\r\n`,
+        ),
+      );
+      this.log(`Authenticated, and logged in`, "info");
     }
   }
 
@@ -184,32 +203,32 @@ export class DAMI {
    *
    * @returns A key value pair of all the data sent by the AMI
    */
-  private formatAMIResponse (chunk: Uint8Array): DAMIData {
-    const response: string = new TextDecoder().decode(chunk) // = "Response: Success\r\nMessage: ..."
+  private formatAMIResponse(chunk: Uint8Array): DAMIData {
+    const response: string = new TextDecoder().decode(chunk); // = "Response: Success\r\nMessage: ..."
     let dataArr: string[] = response.split("\n"); // = ["Response: Success\r", "Message: ..."]
-    dataArr = dataArr.map(data => data.replace(/\r/, "")); // remove \r characters, = ["Response: Success", "Message: ..."]
-    dataArr = dataArr.filter(data => data !== ""); // strip empty lines
+    dataArr = dataArr.map((data) => data.replace(/\r/, "")); // remove \r characters, = ["Response: Success", "Message: ..."]
+    dataArr = dataArr.filter((data) => data !== ""); // strip empty lines
 
     let responseObject: DAMIData = {};
-    dataArr.forEach(data => { // data = "Something: something else"
+    dataArr.forEach((data) => { // data = "Something: something else"
       const dataSplit = data.split(":");
       if (dataSplit.length === 1) { // eg data = "Asterisk ..." (and not an actual property
-        return
+        return;
       }
       const name = dataSplit[0];
-      let value: string|number = dataSplit[1];
+      let value: string | number = dataSplit[1];
       // Values  can have a space before the value, due to the split: "a: b".split(":") === ["a", " b"]
       if (value[0] === " ") {
-        value = value.substring(1)
+        value = value.substring(1);
       }
       // If the value is a number, make it so
       if (!isNaN(Number(dataSplit[1]))) {
-        value = Number(value)
+        value = Number(value);
       }
-      responseObject[name] = value
+      responseObject[name] = value;
     });
 
-    return responseObject
+    return responseObject;
   }
 
   /**
@@ -217,14 +236,17 @@ export class DAMI {
    *
    * @param chunk - Response from AMI
    */
-  private async handleAMIResponse  (chunk: Uint8Array): Promise<void> {
-    const data = this.formatAMIResponse(chunk)
+  private async handleAMIResponse(chunk: Uint8Array): Promise<void> {
+    const data = this.formatAMIResponse(chunk);
     for (let [eventName, cb] of this.listeners) {
       if (data["Event"] === eventName) {
-        this.log("Calling listener for " + eventName, "info")
-        cb(data)
+        this.log("Calling listener for " + eventName, "info");
+        cb(data);
       } else {
-        this.log("No listener is set for the event `" + eventName + "`", "info")
+        this.log(
+          "No listener is set for the event `" + eventName + "`",
+          "info",
+        );
       }
     }
   }
@@ -235,9 +257,8 @@ export class DAMI {
    * @param message - Message to log
    * @param level - Log level
    */
-  private log (message: string, level: LogLevels): void {
+  private log(message: string, level: LogLevels): void {
     message = "[DAMI] | " + level + " | " + message;
-    console[level](message)
+    console[level](message);
   }
-
 }
