@@ -12,20 +12,26 @@ jobs:
   tests:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v2
 
       - name: Install Deno
-        uses: denolib/setup-deno@master
+        uses: denolib/setup-deno@v2
 
       - name: Unit
-        run: deno test --allow-net --allow-env tests/unit
+        run: |
+          cd tests
+          docker-compose up -d
+          deno test --allow-net --allow-env unit
 
       - name: Integration
-        run: deno test --allow-net --allow-env tests/integration
+        run: |
+          cd tests
+          docker-compose up -d
+          deno test --allow-net --allow-env integration
 
   linter:
     runs-on: ubuntu-latest

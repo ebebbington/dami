@@ -1,31 +1,32 @@
 import { Rhum } from "../deps.ts";
+import { DAMI } from "../../src/dami.ts";
+
+const ami = {
+  hostname: "0.0.0.0",
+  port: 5038,
+  logger: false,
+};
+
+const auth = {
+  username: "admin",
+  secret: "mysecret",
+};
 
 Rhum.testPlan("tests/unit/dami.ts", () => {
-  Rhum.testSuite("constructor()", () => {
-    Rhum.testCase(
-      "Sets the configs correctly when all props are passed in",
-      () => {
-      },
-    );
-    Rhum.testCase(
-      "Sets the configs correctly when some props are passed in",
-      () => {
-      },
-    );
-    Rhum.testCase(
-      "Defaults to `defaultConfigs` when no configs were passed in",
-      () => {
-      },
-    );
-  });
   Rhum.testSuite("close()", () => {
-    Rhum.testCase("Closes the connection", () => {
+    Rhum.testCase("Closes the connection", async () => {
+      const Dami = new DAMI(ami);
+      await Dami.connectAndLogin(auth);
+      Dami.close();
     });
   });
   Rhum.testSuite("connectAndLogin()", () => {
     Rhum.testCase("Throws an error when `conn` is already set", () => {
     });
-    Rhum.testCase("Successfully connects and logs in to the AMI", () => {
+    Rhum.testCase("Successfully connects and logs in to the AMI", async () => {
+      const Dami = new DAMI(ami);
+      await Dami.connectAndLogin(auth);
+      Dami.close();
     });
   });
   Rhum.testSuite("to()", () => {

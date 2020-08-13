@@ -127,7 +127,7 @@ export class DAMI {
     });
     eventString += `\r\n`;
     if (this.conn) {
-      this.log("Sending event " + eventString, "info")
+      this.log("Sending event " + eventString, "info");
       await this.conn.write(new TextEncoder().encode(eventString));
     }
   }
@@ -239,18 +239,17 @@ export class DAMI {
    */
   private async handleAMIResponse(chunk: Uint8Array): Promise<void> {
     const data: DAMIData = this.formatAMIResponse(chunk);
-    const event: string =. data["Event"].toString();
+    const event: string = data["Event"].toString();
     if (event) {
-
       if (this.listeners.has(event)) {
-        this.log("Calling listener for " + eventName, "info");
-        const listener = this.listeners.get(event)
+        this.log("Calling listener for " + event, "info");
+        const listener = this.listeners.get(event);
         if (listener) {
-          listener(data)
+          listener(data);
         }
       } else {
         this.log(
-          "No listener is set for the event `" + eventName + "`",
+          "No listener is set for the event `" + event + "`",
           "info",
         );
       }
@@ -265,6 +264,8 @@ export class DAMI {
    */
   private log(message: string, level: LogLevels): void {
     message = "[DAMI] | " + level + " | " + message;
-    console[level](message);
+    if (console[level] !== undefined && this.configs.logger === true) {
+      console[level](message);
+    }
   }
 }
