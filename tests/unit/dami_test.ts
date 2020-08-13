@@ -35,7 +35,7 @@ Rhum.testPlan("tests/unit/dami.ts", () => {
   });
   Rhum.testSuite("on()", () => {
     Rhum.testCase(
-      "Listens for and receives an event for the event type",
+      "Registers a listener",
       () => {
       },
     );
