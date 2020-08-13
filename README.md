@@ -35,7 +35,7 @@ DAMI can connect (using Deno) to an Asterisk AMI, and can start sending events, 
 ## QuickStart
 
 ```typescript
-import { DAMI DAMIData } from "https://deno.land/x/dami/mod.ts";
+import { DAMI, DAMIData } from "https://deno.land/x/dami/mod.ts";
 
 const myPbx = {
   hostname: "127.0.0.1", // IP of your pbx, or container name if using docker, eg "asterisk_pbx"
@@ -50,7 +50,7 @@ const myUser = {
 }
 await Dami.connectAndLogin(myUser) // Connect and Login to the pbx
 
-await Dami.listen() // Start listening for events. Required to register listeners
+Dami.listen() // Start listening for events. Required to register listeners
 
 Dami.on("Hangup", async (data: DAMIData) => {
   console.log("A hangup was made. Here is the data the AMI sent back:")
@@ -109,7 +109,7 @@ await Dami.connectAndLogin({ username: "admin", secret: "mysecret" })
 Sends an event to the AMI, with data
 
 ```typescript
-Dami.to("Originate",  {
+await Dami.to("Originate",  {
   Channel: "sip/12345"
   Exten: 1234
   Context: "default"
@@ -137,3 +137,7 @@ Dami.on("Hangup", (data) => {
 ### `DAMI.listen(): Promise<void>`
 
 Start listening to the AMI events using the DAMI client. When a message is received, DAMI will check if the event name matches a registered listener (`Dami.on(...)`), and if it does, it will invoke the callback
+
+```typescript
+Dami.listen()
+```
