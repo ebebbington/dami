@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+
+  asterisk:
+    container_name: asterisk_pbx
+    image: hibou/asterisk:14
+    ports:
+      - "5060:5060/udp"
+      - "5060:5060/tcp"
+      - "16384-16394:16384-16394/udp"
+      - "8088:8088"
+      - "8089:8089"
+      - "5038:5038" # asterisk ami (manager.conf)
+    volumes:
+      #- "./.docker/config/asterisk/sip.conf:/etc/asterisk/sip.conf"
+      #- "./.docker/config/asterisk/extensions.conf:/etc/asterisk/extensions.conf"
+     # - "./.docker/config/asterisk/pjsip.conf:/etc/asterisk/pjsip.conf"
+      - "./rtp.conf:/etc/asterisk/rtp.conf"
+      - "./manager.conf:/etc/asterisk/manager.conf"
+    labels:
+      - "traefik.enable=false"
