@@ -30,7 +30,6 @@ Rhum.testPlan("tests/unit/dami.ts", () => {
   });
   Rhum.testSuite("to()", () => {
     Rhum.testCase("Sends an event", () => {
-
     });
   });
   Rhum.testSuite("on()", () => {
