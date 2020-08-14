@@ -50,11 +50,11 @@ const myUser = {
 }
 await Dami.connectAndLogin(myUser) // Connect and Login to the pbx
 
-Dami.listen() // Start listening for events. Required to register listeners
+await Dami.listen() // Start listening for events. Required to register listeners
 
 Dami.on("Hangup", async (data: DAMIData) => {
   console.log("A hangup was made. Here is the data the AMI sent back:")
-  console.log(data)
+  console.log(data) // { Event: "Hangup", ... }
   await Dami.to("Originate",  {
     Channel: "sip/12345"
     Exten: 1234
@@ -69,9 +69,11 @@ Dami.on("Hangup", async (data: DAMIData) => {
 
 ```typescript
 const obj: DAMIData = {
-  // any key value pairs, where value can be a number or string
+  // any key value pairs, where value can be a number string, or array of strings
 }
 ```
+
+A property value would only be an array of strings when there is "output" in the response, for example when sending a `SIPPeers` action, you get `Output` in the event response.
 
 ### `new DAMI(configs:  IConfigs): DAMI`
 
