@@ -224,22 +224,24 @@ export class DAMI {
 
     let responseObject: DAMIData = {};
     dataArr.forEach((data) => { // data = "Something: something else"
-
       // If it has an "Output: ..." line, then it a command response
       if (data.indexOf("Output: ") === 0) { // we do this because there are multiple "Output: " items returned (eg multiple items in the array), so when we do  `responseObj[key] = value`, it just overwrites the data
         // For example, data might come across as:
         // ["Output: Name/username         Host          Dyn",
         // "Output: 6001                  (Unspecified)  D"]
-        const dataSplit = data.split(/: (.+)/) // only split first occurrence, as we can have data that is like: "Output: 2 sip peers [Monitored: ..."
+        const dataSplit = data.split(/: (.+)/); // only split first occurrence, as we can have data that is like: "Output: 2 sip peers [Monitored: ..."
         if (responseObject["Output"]) {
-          if (typeof responseObject["Output"] !== "number" && typeof responseObject["Output"] !== "string") {
-            responseObject["Output"].push(dataSplit[1])
+          if (
+            typeof responseObject["Output"] !== "number" &&
+            typeof responseObject["Output"] !== "string"
+          ) {
+            responseObject["Output"].push(dataSplit[1]);
           }
         } else {
-          responseObject["Output"] = []
-          responseObject["Output"].push(dataSplit[1])
+          responseObject["Output"] = [];
+          responseObject["Output"].push(dataSplit[1]);
         }
-      } else {  // it's a event response
+      } else { // it's a event response
         const dataSplit = data.split(":");
         if (dataSplit.length === 1) { // eg data = "Asterisk ..." (and not an actual property
           return;
