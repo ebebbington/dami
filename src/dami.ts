@@ -11,7 +11,7 @@ interface IConfigs {
 type LogLevels = "error" | "info" | "log";
 
 export interface DAMIData {
-  [key: string]: string | number;
+  [key: string]: string | number | string[];
 }
 
 const defaultConfigs = {
@@ -170,7 +170,7 @@ export class DAMI {
               break;
             } else {
               this.log("Received event from the AMI", "info");
-              this.handleAMIResponse(chunk);
+              await this.handleAMIResponse(chunk);
             }
           }
         }
@@ -224,21 +224,38 @@ export class DAMI {
 
     let responseObject: DAMIData = {};
     dataArr.forEach((data) => { // data = "Something: something else"
-      const dataSplit = data.split(":");
-      if (dataSplit.length === 1) { // eg data = "Asterisk ..." (and not an actual property
-        return;
+
+      // If it has an "Output: ..." line, then it a command response
+      if (data.indexOf("Output: ") === 0) { // we do this because there are multiple "Output: " items returned (eg multiple items in the array), so when we do  `responseObj[key] = value`, it just overwrites the data
+        // For example, data might come across as:
+        // ["Output: Name/username         Host          Dyn",
+        // "Output: 6001                  (Unspecified)  D"]
+        const dataSplit = data.split(/: (.+)/) // only split first occurrence, as we can have data that is like: "Output: 2 sip peers [Monitored: ..."
+        if (responseObject["Output"]) {
+          if (typeof responseObject["Output"] !== "number" && typeof responseObject["Output"] !== "string") {
+            responseObject["Output"].push(dataSplit[1])
+          }
+        } else {
+          responseObject["Output"] = []
+          responseObject["Output"].push(dataSplit[1])
+        }
+      } else {  // it's a event response
+        const dataSplit = data.split(":");
+        if (dataSplit.length === 1) { // eg data = "Asterisk ..." (and not an actual property
+          return;
+        }
+        const name = dataSplit[0];
+        let value: string | number = dataSplit[1];
+        // Values  can have a space before the value, due to the split: "a: b".split(":") === ["a", " b"]
+        if (value[0] === " ") {
+          value = value.substring(1);
+        }
+        // If the value is a number, make it so
+        if (!isNaN(Number(dataSplit[1]))) {
+          value = Number(value);
+        }
+        responseObject[name] = value;
       }
-      const name = dataSplit[0];
-      let value: string | number = dataSplit[1];
-      // Values  can have a space before the value, due to the split: "a: b".split(":") === ["a", " b"]
-      if (value[0] === " ") {
-        value = value.substring(1);
-      }
-      // If the value is a number, make it so
-      if (!isNaN(Number(dataSplit[1]))) {
-        value = Number(value);
-      }
-      responseObject[name] = value;
     });
 
     return responseObject;
@@ -252,15 +269,16 @@ export class DAMI {
   private async handleAMIResponse(chunk: Uint8Array): Promise<void> {
     const data: DAMIData = this.formatAMIResponse(chunk);
     if (!data["Event"]) {
-      return;
+      return; // is a command
     }
+    // else it's  an asterisk event
     const event: string = data["Event"].toString();
     if (event) {
       if (this.listeners.has(event)) {
         this.log("Calling listener for " + event, "info");
         const listener = this.listeners.get(event);
         if (listener) {
-          listener(data);
+          await listener(data);
         }
       } else {
         this.log(
