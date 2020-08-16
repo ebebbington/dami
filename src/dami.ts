@@ -157,6 +157,44 @@ export class DAMI {
   }
 
   /**
+   * Send an action, to get the AMI to trigger an event, which you can handle.
+   *
+   * ```ts
+   * // We want to get the SIP peers
+   * await Dami.triggerEvent("SIPPeers", {}, (data) => {
+   *   console.log(data["Event"]) // "PeerlistComplete"
+   * }
+   * // or
+   * const res = await Dami.triggerEvent("SIPPeers", {});
+   * console.log(res["Event"] // "PeerlistComplete"
+   * ```
+   *
+   * @param actionName - The name of the action
+   * @param data - Data to accompany the message
+   * @param cb - The callback to handle the response for
+   */
+  public async triggerEvent (actionName: string, data: DAMIData, cb?: (data: DAMIData) => void): Promise<void|DAMIData> {
+    const message = this.formatAMIMessage(actionName, data);
+    if (this.conn) {
+      await this.conn.write(message);
+      let res;
+      for await (const chunk of this.duplex_conn) {
+        if (chunk) {
+          res = this.formatAMIResponse(chunk);
+          break;
+        } else {
+          break
+        }
+      }
+      if (cb) {
+        cb(res)
+      } else {
+        return res
+      }
+    }
+  }
+
+  /**
    * Listens for any events from the AMI and does ?? with them
    */
   public async listen(): Promise<void> {
