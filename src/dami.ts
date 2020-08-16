@@ -20,38 +20,6 @@ const defaultConfigs = {
   logger: true,
 };
 
-export class DenoTcpDuplexConnection {
-  conn: Deno.Conn;
-  _closed = false;
-
-  constructor(conn: Deno.Conn) {
-    this.conn = conn;
-  }
-
-  [Symbol.asyncIterator](): AsyncIterableIterator<Uint8Array> {
-    return Deno.iter(this.conn);
-  }
-
-  write(chunk: Uint8Array): Promise<number> {
-    return this.conn.write(chunk);
-  }
-
-  close() {
-    if (!this._closed) {
-      this._closed = true;
-      this.conn.close();
-    }
-  }
-}
-
-interface DuplexConnection extends AsyncIterable<Uint8Array> {
-  write(chunk: Uint8Array): Promise<any>;
-
-  [Symbol.asyncIterator](): AsyncIterableIterator<Uint8Array>;
-
-  close(): void;
-}
-
 export class DAMI {
   /**
    * Constructor configs, to connect to the AMI
@@ -62,11 +30,6 @@ export class DAMI {
    * The connection to the AMI
    */
   public conn: Deno.Conn | null = null;
-
-  /**
-   * Similar to type `this.conn`, but uses to listen for messages
-   */
-  private duplex_conn: DuplexConnection | undefined;
 
   /**
    * Holds all events user wishes to listen on, where `string` is the event name
@@ -86,18 +49,7 @@ export class DAMI {
    */
   public close() {
     this.log("Closing connection", "info");
-    try {
-      if (this.conn) {
-        this.conn.close();
-      }
-    } catch (err) {
-    }
-    try {
-      if (this.duplex_conn) {
-        this.duplex_conn.close();
-      }
-    } catch (err) {
-    }
+    this.conn!.close()
   }
 
   /**
@@ -113,17 +65,14 @@ export class DAMI {
       this.conn = await Deno.connect(
         { hostname: this.configs.hostname, port: this.configs.port },
       );
-      this.duplex_conn = new DenoTcpDuplexConnection(this.conn);
       this.log(
         `Connected to ${this.configs.hostname}:${this.configs.port}`,
         "info",
       );
 
       // Login
-      if (this.conn) {
-        const message = this.formatAMIMessage("Login", auth)
-        await this.conn.write(message);
-      }
+      const loginMessage = this.formatAMIMessage("Login", auth)
+      await this.conn!.write(loginMessage);
 
       return;
     }
@@ -138,12 +87,10 @@ export class DAMI {
    */
   public async to(actionName: string, data: DAMIData): Promise<void> {
     const message = this.formatAMIMessage(actionName, data)
-    if (this.conn) {
-      data["Action"] = actionName
-      this.log("Sending event:", "info");
-      this.log(data.toString(), "info")
-      await this.conn.write(message);
-    }
+    data["Action"] = actionName
+    this.log("Sending event:", "info");
+    this.log(data.toString(), "info")
+    await this.conn!.write(message);
   }
 
   /**
@@ -175,22 +122,20 @@ export class DAMI {
    */
   public async triggerEvent (actionName: string, data: DAMIData, cb?: (data: DAMIData) => void): Promise<void|DAMIData> {
     const message = this.formatAMIMessage(actionName, data);
-    if (this.conn) {
-      await this.conn.write(message);
-      let res;
-      for await (const chunk of this.duplex_conn) {
-        if (chunk) {
-          res = this.formatAMIResponse(chunk);
-          break;
-        } else {
-          break
-        }
-      }
-      if (cb) {
-        cb(res)
+    await this.conn!.write(message);
+    let res;
+    for await (const chunk of Deno.iter(this.conn!)) {
+      if (chunk) {
+        res = this.formatAMIResponse(chunk);
+        break;
       } else {
-        return res
+        break
       }
+    }
+    if (cb) {
+      cb(res)
+    } else {
+      return res
     }
   }
 
@@ -200,21 +145,14 @@ export class DAMI {
   public async listen(): Promise<void> {
     (async () => {
       try {
-        if (this.duplex_conn) {
-          for await (const chunk of this.duplex_conn) {
-            if (!chunk) {
-              this.log(
-                "Invalid response from event received from the AMI. Closing connection",
-                "error",
-              );
-              if (this.conn) {
-                this.conn.close();
-              }
-              break;
-            } else {
-              this.log("Received event from the AMI", "info");
-              await this.handleAMIResponse(chunk);
-            }
+        for await (const chunk of Deno.iter(this.conn)) {
+          if (!chunk) {
+            this.log("Invalid response from event received from the AMI. Closing connection", "error",);
+            this.conn!.close();
+            break;
+          } else {
+            this.log("Received event from the AMI", "info");
+            await this.handleAMIResponse(chunk);
           }
         }
       } catch (e) {
@@ -222,12 +160,7 @@ export class DAMI {
           "Connection failed whilst receiving an event from the AMI. Closing connection",
           "error",
         );
-        if (this.conn) {
-          try {
-            this.conn.close();
-          } catch (err) {
-          }
-        }
+        this.conn!.close();
       }
     })();
   }
