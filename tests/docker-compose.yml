@@ -3,7 +3,7 @@ version: '3'
 services:
 
   asterisk:
-    container_name: asterisk_pbx
+    container_name: dami_pbx
     image: hibou/asterisk:14
     ports:
       - "5060:5060/udp"

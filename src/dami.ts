@@ -109,6 +109,7 @@ export class DAMI {
     auth: { username: string; secret: string },
   ): Promise<void> {
     if (!this.conn) {
+      // Connect
       this.conn = await Deno.connect(
         { hostname: this.configs.hostname, port: this.configs.port },
       );
@@ -117,7 +118,13 @@ export class DAMI {
         `Connected to ${this.configs.hostname}:${this.configs.port}`,
         "info",
       );
-      await this.login(auth);
+
+      // Login
+      if (this.conn) {
+        const message = this.formatAMIMessage("Login", auth)
+        await this.conn.write(message);
+      }
+
       return;
     }
     throw new Error("A connection has already been made");
@@ -126,18 +133,16 @@ export class DAMI {
   /**
    * Send a message/event to the AMI
    *
-   * @param eventName - The name of the event
+   * @param actionName - The name of the event
    * @param data - The data to send across, in key value pairs
    */
-  public async to(eventName: string, data: DAMIData): Promise<void> {
-    let eventString = `Action: ${eventName}\r\n`;
-    Object.keys(data).forEach((key) => {
-      eventString += `${key}: ${data[key]}\r\n`;
-    });
-    eventString += `\r\n`;
+  public async to(actionName: string, data: DAMIData): Promise<void> {
+    const message = this.formatAMIMessage(actionName, data)
     if (this.conn) {
-      this.log("Sending event " + eventString, "info");
-      await this.conn.write(new TextEncoder().encode(eventString));
+      data["Action"] = actionName
+      this.log("Sending event:", "info");
+      this.log(data.toString(), "info")
+      await this.conn.write(message);
     }
   }
 
@@ -190,23 +195,23 @@ export class DAMI {
   }
 
   /**
-   * Send a Login action to the AMI to authenticate
+   * Constructs the message we want to send through the connection, in
+   * the correct format. When we write a message, it needs to be in the format of:
+   *     "action: 'some value'\r\nkey: 'value'... etc"
+   * This then needs to be converted to a Uint8Array (as required when sending through `Deno.connect`)
    *
-   * @param auth - Username and secret of the account to login as
+   * @param actionName - The action name
+   * @param data - The extra data to send with the action
+   *
+   * @returns The encoded message to write
    */
-  private async login(
-    auth: { username: string; secret: string },
-  ): Promise<void> {
-    const username = auth.username;
-    const secret = auth.secret;
-    if (this.conn) {
-      await this.conn.write(
-        new TextEncoder().encode(
-          `action: Login\r\nusername: ${username}\r\nsecret: ${secret}\r\n\r\n`,
-        ),
-      );
-      this.log(`Authenticated, and logged in`, "info");
-    }
+  private formatAMIMessage (actionName: string, data: DAMIData): Uint8Array {
+    let eventString = `action: ${actionName}\r\n`;
+    Object.keys(data).forEach((key) => {
+      eventString += `${key}: ${data[key]}\r\n`;
+    });
+    eventString += `\r\n`;
+    return new TextEncoder().encode(eventString)
   }
 
   /**
@@ -230,14 +235,14 @@ export class DAMI {
         // ["Output: Name/username         Host          Dyn",
         // "Output: 6001                  (Unspecified)  D"]
         const dataSplit = data.split(/: (.+)/); // only split first occurrence, as we can have data that is like: "Output: 2 sip peers [Monitored: ..."
-        if (responseObject["Output"]) {
+        if (responseObject["Output"]) { // We have already added the output property
           if (
             typeof responseObject["Output"] !== "number" &&
             typeof responseObject["Output"] !== "string"
           ) {
             responseObject["Output"].push(dataSplit[1]);
           }
-        } else {
+        } else { // create it
           responseObject["Output"] = [];
           responseObject["Output"].push(dataSplit[1]);
         }
