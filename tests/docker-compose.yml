@@ -13,7 +13,7 @@ services:
       - "8089:8089"
       - "5038:5038" # asterisk ami (manager.conf)
     volumes:
-      #- "./.docker/config/asterisk/sip.conf:/etc/asterisk/sip.conf"
+      - "./sip.conf:/etc/asterisk/sip.conf"
       #- "./.docker/config/asterisk/extensions.conf:/etc/asterisk/extensions.conf"
      # - "./.docker/config/asterisk/pjsip.conf:/etc/asterisk/pjsip.conf"
       - "./rtp.conf:/etc/asterisk/rtp.conf"
