@@ -10,6 +10,10 @@ interface IConfigs {
 
 type LogLevels = "error" | "info" | "log";
 
+const actionEventPairs: {[key: string]: string[]} = {
+  SIPPeers: ["PeerEntry", "PeerListComplete"]
+}
+
 export interface DAMIData {
   [key: string]: string | number | string[];
 }
@@ -89,7 +93,7 @@ export class DAMI {
     const message = this.formatAMIMessage(actionName, data)
     data["Action"] = actionName
     this.log("Sending event:", "info");
-    this.log(data.toString(), "info")
+    this.log(JSON.stringify(data), "info")
     await this.conn!.write(message);
   }
 
@@ -120,24 +124,26 @@ export class DAMI {
    * @param data - Data to accompany the message
    * @param cb - The callback to handle the response for
    */
-  public async triggerEvent (actionName: string, data: DAMIData, cb?: (data: DAMIData) => void): Promise<void|DAMIData> {
-    const message = this.formatAMIMessage(actionName, data);
-    await this.conn!.write(message);
-    let res;
-    for await (const chunk of Deno.iter(this.conn!)) {
-      if (chunk) {
-        res = this.formatAMIResponse(chunk);
-        break;
-      } else {
-        break
-      }
-    }
-    if (cb) {
-      cb(res)
-    } else {
-      return res
-    }
-  }
+  // public async triggerEvent (actionName: string, data: DAMIData, cb?: (data: DAMIData) => void): Promise<void|DAMIData> {
+  //   const message = this.formatAMIMessage(actionName, data);
+  //   await this.conn!.write(message);
+  //   let res;
+  //   for await (const chunk of Deno.iter(this.conn!)) {
+  //     if (chunk) {
+  //       const response = this.formatAMIResponse(chunk);
+  //       if (response["Event"] === actionEventPairs[actionName]) {
+  //         res = response;
+  //         //break;
+  //       }
+  //     }
+  //   }
+  //   if (cb) {
+  //     //@ts-ignore Because im unsure on how to fix the error of: "Argument of type 'DAMIData | void' is not assignable to parameter of type 'DAMIData'."
+  //     await cb(res)
+  //   } else {
+  //     return res
+  //   }
+  // }
 
   /**
    * Listens for any events from the AMI and does ?? with them
@@ -145,7 +151,7 @@ export class DAMI {
   public async listen(): Promise<void> {
     (async () => {
       try {
-        for await (const chunk of Deno.iter(this.conn)) {
+        for await (const chunk of Deno.iter(this.conn!)) {
           if (!chunk) {
             this.log("Invalid response from event received from the AMI. Closing connection", "error",);
             this.conn!.close();
@@ -157,10 +163,12 @@ export class DAMI {
         }
       } catch (e) {
         this.log(
-          "Connection failed whilst receiving an event from the AMI. Closing connection",
+          "Connection failed whilst receiving an event from the AMI. The connection may already be closed. Stopping.",
           "error",
         );
-        this.conn!.close();
+        try {
+          this.conn!.close();
+        } catch  (err) {}
       }
     })();
   }
@@ -192,77 +200,155 @@ export class DAMI {
    *
    * @returns A key value pair of all the data sent by the AMI
    */
-  private formatAMIResponse(chunk: Uint8Array): DAMIData {
+  private formatAMIResponse(chunk: Uint8Array): DAMIData|DAMIData[] {
+    function formatArrayIntoObject (arr: string[]): DAMIData {
+      arr = arr.filter((data) => data !== ""); // strip empty lines
+      let responseObject: DAMIData = {};
+      arr.forEach((data) => { // data = "Something: something else"
+        // If it has an "Output: ..." line, then there's a  chance there are multiple Output lines
+        if (data.indexOf("Output: ") === 0) { // we do this because there are multiple "Output: " items returned (eg multiple items in the array), so when we do  `responseObj[key] = value`, it just overwrites the data
+          // For example, data might come across as:
+          // ["Output: Name/username         Host          Dyn",
+          // "Output: 6001                  (Unspecified)  D"]
+          const dataSplit = data.split(/: (.+)/); // only split first occurrence, as we can have data that is like: "Output: 2 sip peers [Monitored: ..."
+          if (responseObject["Output"]) { // We have already added the output property
+            if (
+                typeof responseObject["Output"] !== "number" &&
+                typeof responseObject["Output"] !== "string"
+            ) {
+              responseObject["Output"].push(dataSplit[1]);
+            }
+          } else { // create it
+            responseObject["Output"] = [];
+            responseObject["Output"].push(dataSplit[1]);
+          }
+        } else { // it's a event response
+          const dataSplit = data.split(":");
+          if (dataSplit.length === 1) { // eg data = "Asterisk ..." (and not an actual property
+            return;
+          }
+          const name = dataSplit[0];
+          let value: string | number = dataSplit[1];
+          // Values  can have a space before the value, due to the split: "a: b".split(":") === ["a", " b"]
+          if (value[0] === " ") {
+            value = value.substring(1);
+          }
+          // If the value is a number, make it so
+          if (!isNaN(Number(dataSplit[1]))) {
+            value = Number(value);
+          }
+          responseObject[name] = value;
+        }
+      });
+      return responseObject
+    }
+
     const response: string = new TextDecoder().decode(chunk); // = "Response: Success\r\nMessage: ..."
     let dataArr: string[] = response.split("\n"); // = ["Response: Success\r", "Message: ..."]
     dataArr = dataArr.map((data) => data.replace(/\r/, "")); // remove \r characters, = ["Response: Success", "Message: ..."]
-    dataArr = dataArr.filter((data) => data !== ""); // strip empty lines
 
-    let responseObject: DAMIData = {};
-    dataArr.forEach((data) => { // data = "Something: something else"
-      // If it has an "Output: ..." line, then it a command response
-      if (data.indexOf("Output: ") === 0) { // we do this because there are multiple "Output: " items returned (eg multiple items in the array), so when we do  `responseObj[key] = value`, it just overwrites the data
-        // For example, data might come across as:
-        // ["Output: Name/username         Host          Dyn",
-        // "Output: 6001                  (Unspecified)  D"]
-        const dataSplit = data.split(/: (.+)/); // only split first occurrence, as we can have data that is like: "Output: 2 sip peers [Monitored: ..."
-        if (responseObject["Output"]) { // We have already added the output property
-          if (
-            typeof responseObject["Output"] !== "number" &&
-            typeof responseObject["Output"] !== "string"
-          ) {
-            responseObject["Output"].push(dataSplit[1]);
-          }
-        } else { // create it
-          responseObject["Output"] = [];
-          responseObject["Output"].push(dataSplit[1]);
+    // Because an event sent from asterisk can contain multiple blocks, for example (before splitting):
+    //   Response: Success
+    //   Message: Authentication accepted
+    //
+    //   Event: FullyBooted
+    //   ...
+    //
+    //   Event: PeerEntry
+    //   ...
+    //
+    //   Event: PeerEntry
+    // We dont want to override the data, as this has become a list. So in these cases, when we split using "\n", an item in the array that is empty denotes a new section appears after,  so say there is an empty item in the array, it could mean there are 2 `PeerEntry` blocks
+    const startOfNewSectionIndex = dataArr.indexOf("");
+    if (startOfNewSectionIndex !==  -1) { // the event has multiple sections, so we put it into an array instead
+      const blocks: Array<Array<string>> = [];
+      function loop (arr: string[]): void {
+        if (arr[0] === "") { // has an empty 0th index, eg a 1+n section so  remove it
+          arr.splice(0, 1)
         }
-      } else { // it's a event response
-        const dataSplit = data.split(":");
-        if (dataSplit.length === 1) { // eg data = "Asterisk ..." (and not an actual property
-          return;
+
+        // And if there are no truthy values, do nothing
+        if (arr.filter(a => a !== "").length === 0) {
+          return
         }
-        const name = dataSplit[0];
-        let value: string | number = dataSplit[1];
-        // Values  can have a space before the value, due to the split: "a: b".split(":") === ["a", " b"]
-        if (value[0] === " ") {
-          value = value.substring(1);
+
+        if (arr.indexOf("") === -1) { // Reached the last section
+          blocks.push(arr)
+          return
         }
-        // If the value is a number, make it so
-        if (!isNaN(Number(dataSplit[1]))) {
-          value = Number(value);
-        }
-        responseObject[name] = value;
+        const otherSections = arr.splice(arr.indexOf(""))
+        blocks.push(arr);
+        loop(otherSections)
       }
-    });
+      loop(dataArr);
+      const responseArr: Array<DAMIData> = [];
+      blocks.forEach(block => {
+        const formattedBlock = formatArrayIntoObject(block)
+        if (formattedBlock) {
+          responseArr.push(formattedBlock)
+        }
+      })
+      return responseArr
+    } else { //  It's a  single event block, so return an object
+      const responseObject =  formatArrayIntoObject(dataArr)
+      return responseObject
+    }
 
-    return responseObject;
   }
 
   /**
-   * Responsible for handling a response from the AMI, to call  any listeners on the event name
+   * Responsible for handling a response from the AMI, to call any listeners on the event name
    *
    * @param chunk - Response from AMI
    */
   private async handleAMIResponse(chunk: Uint8Array): Promise<void> {
-    const data: DAMIData = this.formatAMIResponse(chunk);
-    if (!data["Event"]) {
-      return; // is a command
-    }
-    // else it's  an asterisk event
-    const event: string = data["Event"].toString();
-    if (event) {
-      if (this.listeners.has(event)) {
-        this.log("Calling listener for " + event, "info");
-        const listener = this.listeners.get(event);
-        if (listener) {
-          await listener(data);
+    const data = this.formatAMIResponse(chunk);
+    if (Array.isArray(data)) {
+      //  Special case for the FullyBooted event, where it is sent as 2 blocks on auth, and 1 block when failed auth
+      if (data[1] && data[1]["Event"] === "FullyBooted")  {
+        data[1]["Response"] = data[0]["Response"]
+        data[1]["Message"] = data[0]["Message"]
+      }
+
+      data.forEach(async (d) => {
+        if (!d["Event"]) {
+          return; // is a command
         }
-      } else {
-        this.log(
-          "No listener is set for the event `" + event + "`",
-          "info",
-        );
+        const event: string = d["Event"].toString();
+        if (event) {
+          if (this.listeners.has(event)) {
+            this.log("Calling listener for " + event, "info");
+            const listener = this.listeners.get(event);
+            if (listener) {
+              await listener(d);
+            }
+          } else {
+            this.log(
+                "No listener is set for the event `" + event + "`",
+                "info",
+            );
+          }
+        }
+      })
+    } else {
+      if (!data["Event"]) {
+        return;
+      }
+      // else it's  an asterisk event
+      const event: string = data["Event"].toString();
+      if (event) {
+        if (this.listeners.has(event)) {
+          this.log("Calling listener for " + event, "info");
+          const listener = this.listeners.get(event);
+          if (listener) {
+            await listener(data);
+          }
+        } else {
+          this.log(
+              "No listener is set for the event `" + event + "`",
+              "info",
+          );
+        }
       }
     }
   }
