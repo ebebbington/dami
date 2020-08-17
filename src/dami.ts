@@ -164,7 +164,9 @@ export class DAMI {
         );
         try {
           this.conn!.close();
-        } catch  (err) {}
+        } catch  (err) {
+          // do nothing
+        }
       }
     })();
   }

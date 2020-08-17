@@ -30,7 +30,9 @@ Deno.test({
     const Dami = new DAMI(ami);
     await Dami.connectAndLogin(auth);
     // Can receive events
+    // deno-lint-ignore no-explicit-any
     let res: any = {};
+    // deno-lint-ignore no-explicit-any
     const peerEntryResults: any = [];
     Dami.on("FullyBooted", (data) => {
       res = data;
