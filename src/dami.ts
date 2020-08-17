@@ -49,7 +49,7 @@ export class DAMI {
    */
   public close() {
     this.log("Closing connection", "info");
-    this.conn!.close()
+    this.conn!.close();
   }
 
   /**
@@ -71,7 +71,7 @@ export class DAMI {
       );
 
       // Login
-      const loginMessage = this.formatAMIMessage("Login", auth)
+      const loginMessage = this.formatAMIMessage("Login", auth);
       await this.conn!.write(loginMessage);
 
       return;
@@ -86,10 +86,10 @@ export class DAMI {
    * @param data - The data to send across, in key value pairs
    */
   public async to(actionName: string, data: DAMIData): Promise<void> {
-    const message = this.formatAMIMessage(actionName, data)
-    data["Action"] = actionName
+    const message = this.formatAMIMessage(actionName, data);
+    data["Action"] = actionName;
     this.log("Sending event:", "info");
-    this.log(JSON.stringify(data), "info")
+    this.log(JSON.stringify(data), "info");
     await this.conn!.write(message);
   }
 
@@ -149,7 +149,10 @@ export class DAMI {
       try {
         for await (const chunk of Deno.iter(this.conn!)) {
           if (!chunk) {
-            this.log("Invalid response from event received from the AMI. Closing connection", "error",);
+            this.log(
+              "Invalid response from event received from the AMI. Closing connection",
+              "error",
+            );
             this.conn!.close();
             break;
           } else {
@@ -164,7 +167,7 @@ export class DAMI {
         );
         try {
           this.conn!.close();
-        } catch  (err) {
+        } catch (err) {
           // do nothing
         }
       }
@@ -182,13 +185,13 @@ export class DAMI {
    *
    * @returns The encoded message to write
    */
-  private formatAMIMessage (actionName: string, data: DAMIData): Uint8Array {
+  private formatAMIMessage(actionName: string, data: DAMIData): Uint8Array {
     let eventString = `action: ${actionName}\r\n`;
     Object.keys(data).forEach((key) => {
       eventString += `${key}: ${data[key]}\r\n`;
     });
     eventString += `\r\n`;
-    return new TextEncoder().encode(eventString)
+    return new TextEncoder().encode(eventString);
   }
 
   /**
@@ -198,8 +201,8 @@ export class DAMI {
    *
    * @returns A key value pair of all the data sent by the AMI
    */
-  private formatAMIResponse(chunk: Uint8Array): DAMIData|DAMIData[] {
-    function formatArrayIntoObject (arr: string[]): DAMIData {
+  private formatAMIResponse(chunk: Uint8Array): DAMIData | DAMIData[] {
+    function formatArrayIntoObject(arr: string[]): DAMIData {
       arr = arr.filter((data) => data !== ""); // strip empty lines
       let responseObject: DAMIData = {};
       arr.forEach((data) => { // data = "Something: something else"
@@ -211,8 +214,8 @@ export class DAMI {
           const dataSplit = data.split(/: (.+)/); // only split first occurrence, as we can have data that is like: "Output: 2 sip peers [Monitored: ..."
           if (responseObject["Output"]) { // We have already added the output property
             if (
-                typeof responseObject["Output"] !== "number" &&
-                typeof responseObject["Output"] !== "string"
+              typeof responseObject["Output"] !== "number" &&
+              typeof responseObject["Output"] !== "string"
             ) {
               responseObject["Output"].push(dataSplit[1]);
             }
@@ -238,7 +241,7 @@ export class DAMI {
           responseObject[name] = value;
         }
       });
-      return responseObject
+      return responseObject;
     }
 
     const response: string = new TextDecoder().decode(chunk); // = "Response: Success\r\nMessage: ..."
@@ -258,40 +261,39 @@ export class DAMI {
     //   Event: PeerEntry
     // We dont want to override the data, as this has become a list. So in these cases, when we split using "\n", an item in the array that is empty denotes a new section appears after,  so say there is an empty item in the array, it could mean there are 2 `PeerEntry` blocks
     const startOfNewSectionIndex = dataArr.indexOf("");
-    if (startOfNewSectionIndex !==  -1) { // the event has multiple sections, so we put it into an array instead
+    if (startOfNewSectionIndex !== -1) { // the event has multiple sections, so we put it into an array instead
       const blocks: Array<Array<string>> = [];
-      function loop (arr: string[]): void {
+      function loop(arr: string[]): void {
         if (arr[0] === "") { // has an empty 0th index, eg a 1+n section so  remove it
-          arr.splice(0, 1)
+          arr.splice(0, 1);
         }
 
         // And if there are no truthy values, do nothing
-        if (arr.filter(a => a !== "").length === 0) {
-          return
+        if (arr.filter((a) => a !== "").length === 0) {
+          return;
         }
 
         if (arr.indexOf("") === -1) { // Reached the last section
-          blocks.push(arr)
-          return
+          blocks.push(arr);
+          return;
         }
-        const otherSections = arr.splice(arr.indexOf(""))
+        const otherSections = arr.splice(arr.indexOf(""));
         blocks.push(arr);
-        loop(otherSections)
+        loop(otherSections);
       }
       loop(dataArr);
       const responseArr: Array<DAMIData> = [];
-      blocks.forEach(block => {
-        const formattedBlock = formatArrayIntoObject(block)
+      blocks.forEach((block) => {
+        const formattedBlock = formatArrayIntoObject(block);
         if (formattedBlock) {
-          responseArr.push(formattedBlock)
+          responseArr.push(formattedBlock);
         }
-      })
-      return responseArr
+      });
+      return responseArr;
     } else { //  It's a  single event block, so return an object
-      const responseObject =  formatArrayIntoObject(dataArr)
-      return responseObject
+      const responseObject = formatArrayIntoObject(dataArr);
+      return responseObject;
     }
-
   }
 
   /**
@@ -303,9 +305,9 @@ export class DAMI {
     const data = this.formatAMIResponse(chunk);
     if (Array.isArray(data)) {
       //  Special case for the FullyBooted event, where it is sent as 2 blocks on auth, and 1 block when failed auth
-      if (data[1] && data[1]["Event"] === "FullyBooted")  {
-        data[1]["Response"] = data[0]["Response"]
-        data[1]["Message"] = data[0]["Message"]
+      if (data[1] && data[1]["Event"] === "FullyBooted") {
+        data[1]["Response"] = data[0]["Response"];
+        data[1]["Message"] = data[0]["Message"];
       }
 
       data.forEach(async (d) => {
@@ -322,12 +324,12 @@ export class DAMI {
             }
           } else {
             this.log(
-                "No listener is set for the event `" + event + "`",
-                "info",
+              "No listener is set for the event `" + event + "`",
+              "info",
             );
           }
         }
-      })
+      });
     } else {
       if (!data["Event"]) {
         return;
@@ -343,8 +345,8 @@ export class DAMI {
           }
         } else {
           this.log(
-              "No listener is set for the event `" + event + "`",
-              "info",
+            "No listener is set for the event `" + event + "`",
+            "info",
           );
         }
       }
