@@ -1,4 +1,4 @@
-import { DAMI } from "../../src/dami.ts";
+import { DAMI, DAMIData } from "../../src/dami.ts";
 import { Rhum } from "../deps.ts";
 
 const ami = {
@@ -12,46 +12,46 @@ const auth = {
   secret: "mysecret",
 };
 
+function sleep(milliseconds: number) {
+  var start = new Date().getTime();
+  for (var i = 0; i < 1e7; i++) {
+    if ((new Date().getTime() - start) > milliseconds) {
+      break;
+    }
+  }
+}
+
 Deno.test({
-  name: "Can connect, login, and receieve events",
+  name: "Can connect, login and receieve/send events",
   sanitizeOps: false,
   sanitizeResources: false,
   async fn(): Promise<void> {
-    // Assert connection and login
+    // Can connect and login
     const Dami = new DAMI(ami);
     await Dami.connectAndLogin(auth);
-    await Dami.listen();
+    // Can receive events
+    // deno-lint-ignore no-explicit-any
     let res: any = {};
+    // deno-lint-ignore no-explicit-any
+    const peerEntryResults: any = [];
     Dami.on("FullyBooted", (data) => {
       res = data;
-      Dami.close();
     });
+    Dami.on("PeerEntry", (data) => {
+      peerEntryResults.push(data);
+    });
+    await Dami.listen();
     await setTimeout(() => {
       Rhum.asserts.assertEquals(res.Event, "FullyBooted");
       Rhum.asserts.assertEquals(res.Message, "Authentication accepted");
-      Dami.close();
     }, 2000);
-  },
-});
 
-Deno.test({
-  name: "Can send events",
-  sanitizeOps: false,
-  sanitizeResources: false,
-  async fn(): Promise<void> {
-    // Assert sending  events
-    const Dami = new DAMI(ami);
-    await Dami.connectAndLogin(auth);
-    await Dami.listen();
-    let res: any = {};
-    Dami.on("PeerlistComplete", (data) => {
-      res = data;
-      Dami.close();
-    });
-    await Dami.to("SIPPeers", {});
+    // can send/trigger events
+    Dami.to("SIPPeers", {});
     await setTimeout(() => {
-      Rhum.asserts.assertEquals(res.Event, "PeerlistComplete");
-      Rhum.asserts.assertEquals(res.Message, "Peer status list will follow");
+      Rhum.asserts.assertEquals(peerEntryResults.length, 2);
+      Rhum.asserts.assertEquals(peerEntryResults[0].ObjectName, 6001);
+      Rhum.asserts.assertEquals(peerEntryResults[1].ObjectName, 6002);
       Dami.close();
     }, 2000);
   },

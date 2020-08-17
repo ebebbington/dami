@@ -42,8 +42,8 @@ jobs:
       - name: Install Deno
         uses: denolib/setup-deno@master
 
-#      - name: Lint
-#        run: deno lint --unstable
+      - name: Lint
+        run: deno lint --unstable
 
       - name: Formatter
         run: deno fmt --check

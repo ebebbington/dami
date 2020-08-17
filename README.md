@@ -52,15 +52,26 @@ await Dami.connectAndLogin(myUser) // Connect and Login to the pbx
 
 await Dami.listen() // Start listening for events. Required to register listeners
 
+Dami.on("FullyBooted", (data: DAMIData)  => { // event for when you authenticate (or fail to)
+  console.log("Auth response:")
+  console.log(data)
+})
+
 Dami.on("Hangup", async (data: DAMIData) => {
   console.log("A hangup was made. Here is the data the AMI sent back:")
   console.log(data) // { Event: "Hangup", ... }
   await Dami.to("Originate",  {
-    Channel: "sip/12345"
-    Exten: 1234
+    Channel: "sip/12345",
+    Exten: 1234,
     Context: "default"
-  }
+  })
 })
+
+// Send an action to the AMI to get an event
+Dami.on("PeerEntry", (data: DAMIData) => { // If you have multiple peers, this cb will be called for each one
+  console.log(data) // { ObjectName: 6002, Event: "PeerEntry", ... }
+})
+Dami.to("SIPPeers", {})
 ```
 
 ## Documentation
