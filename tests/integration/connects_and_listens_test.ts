@@ -1,4 +1,4 @@
-import {DAMI, DAMIData} from "../../src/dami.ts";
+import { DAMI, DAMIData } from "../../src/dami.ts";
 import { Rhum } from "../deps.ts";
 
 const ami = {
@@ -15,7 +15,7 @@ const auth = {
 function sleep(milliseconds: number) {
   var start = new Date().getTime();
   for (var i = 0; i < 1e7; i++) {
-    if ((new Date().getTime() - start) > milliseconds){
+    if ((new Date().getTime() - start) > milliseconds) {
       break;
     }
   }
@@ -36,21 +36,21 @@ Deno.test({
       res = data;
     });
     Dami.on("PeerEntry", (data) => {
-      peerEntryResults.push(data)
-    })
+      peerEntryResults.push(data);
+    });
     await Dami.listen();
-    await setTimeout(() =>  {
+    await setTimeout(() => {
       Rhum.asserts.assertEquals(res.Event, "FullyBooted");
       Rhum.asserts.assertEquals(res.Message, "Authentication accepted");
-    },  2000)
+    }, 2000);
 
     // can send/trigger events
-    Dami.to("SIPPeers", {})
+    Dami.to("SIPPeers", {});
     await setTimeout(() => {
       Rhum.asserts.assertEquals(peerEntryResults.length, 2);
-      Rhum.asserts.assertEquals(peerEntryResults[0].ObjectName, 6001)
-      Rhum.asserts.assertEquals(peerEntryResults[1].ObjectName, 6002)
-      Dami.close()
-    },  2000)
+      Rhum.asserts.assertEquals(peerEntryResults[0].ObjectName, 6001);
+      Rhum.asserts.assertEquals(peerEntryResults[1].ObjectName, 6002);
+      Dami.close();
+    }, 2000);
   },
 });

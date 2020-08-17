@@ -24,21 +24,21 @@ Rhum.testPlan("tests/unit/dami_test.ts", () => {
     Rhum.testCase("Throws an error when `conn` is already set", async () => {
       let expectedErr = {
         msg: "",
-        thrown: true
-      }
-      const Dami = new DAMI(ami)
-      await Dami.connectAndLogin(auth)
+        thrown: true,
+      };
+      const Dami = new DAMI(ami);
+      await Dami.connectAndLogin(auth);
       try {
-        await Dami.connectAndLogin(auth)
+        await Dami.connectAndLogin(auth);
       } catch (err) {
         expectedErr.msg = err.message;
-        expectedErr.thrown =  true
+        expectedErr.thrown = true;
       }
       Rhum.asserts.assertEquals(expectedErr, {
         msg: "A connection has already been made",
-        thrown: true
-      })
-      Dami.close()
+        thrown: true,
+      });
+      Dami.close();
     });
     Rhum.testCase("Successfully connects and logs in to the AMI", async () => {
       const Dami = new DAMI(ami);
@@ -48,21 +48,21 @@ Rhum.testPlan("tests/unit/dami_test.ts", () => {
   });
   Rhum.testSuite("to()", () => {
     Rhum.testCase("Sends an event", async () => {
-      const Dami = new DAMI(ami)
-      await Dami.connectAndLogin(auth)
-      await Dami.listen()
-      await Dami.to("GetConfig", {})
-      Dami.close()
+      const Dami = new DAMI(ami);
+      await Dami.connectAndLogin(auth);
+      await Dami.listen();
+      await Dami.to("GetConfig", {});
+      Dami.close();
     });
   });
   Rhum.testSuite("on()", () => {
     Rhum.testCase(
       "Registers a listener",
       () => {
-        const Dami = new DAMI(ami)
+        const Dami = new DAMI(ami);
         Dami.on("SomeEvent", (data) => {
-          console.log('got an event')
-        })
+          console.log("got an event");
+        });
       },
     );
   });
