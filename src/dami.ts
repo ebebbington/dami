@@ -10,10 +10,6 @@ interface IConfigs {
 
 type LogLevels = "error" | "info" | "log";
 
-const actionEventPairs: {[key: string]: string[]} = {
-  SIPPeers: ["PeerEntry", "PeerListComplete"]
-}
-
 export interface DAMIData {
   [key: string]: string | number | string[];
 }
