@@ -1,0 +1,14 @@
+{
+  "name": "dami",
+  "description": "Asterisk Manager Interface (AMI) Client for Deno",
+  "repository": "https://github.com/ebebbington/dami",
+  "stable": true,
+  "files": [
+    "mod.ts",
+    "README.md",
+    "src",
+    "dami-logo.png",
+    "LICENSE"
+  ],
+  "version": "1.0.5"
+}
