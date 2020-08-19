@@ -231,9 +231,9 @@ export class DAMI {
           }
           // If the value is a number, make it so
           if (!isNaN(Number(value))) {
-            responseObject[name] = Number(value)
+            responseObject[name] = Number(value);
           } else {
-            responseObject[name] = value
+            responseObject[name] = value;
           }
         }
       });
@@ -298,7 +298,7 @@ export class DAMI {
    * @param chunk - Response from AMI
    */
   private async handleAMIResponse(chunk: Uint8Array): Promise<void> {
-    const runChecksOnResponseAndSend  = async (obj: DAMIData) => {
+    const runChecksOnResponseAndSend = async (obj: DAMIData) => {
       if (!obj["Event"]) {
         return;
       }
@@ -313,8 +313,8 @@ export class DAMI {
           }
         } else {
           this.log(
-              "No listener is set for the event `" + event + "`",
-              "info",
+            "No listener is set for the event `" + event + "`",
+            "info",
           );
         }
       }
@@ -327,10 +327,10 @@ export class DAMI {
         data[1]["Message"] = data[0]["Message"];
       }
       for (const d of data) {
-        await runChecksOnResponseAndSend(d)
+        await runChecksOnResponseAndSend(d);
       }
     } else {
-      await runChecksOnResponseAndSend(data)
+      await runChecksOnResponseAndSend(data);
     }
   }
 
