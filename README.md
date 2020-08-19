@@ -28,6 +28,30 @@ DAMI (Deno Asterisk Manager Interface) is an AMI client for Deno. It acts as a c
 
 DAMI can connect (using Deno) to an Asterisk AMI, and can start sending events, for example logging in, then retreiving sip peers. All the logic to send the messages is handled by DAMI, all you need to do is specify an event name and data. The same is said for receiving messages - you just need to create a listener for that event.
 
+To clarify, **DAMI does not modify the data sent back from your AMI**, DAMI does convert values to integers *if it can*, but you can safely know what you see as the response of an event for the AMI API, is exactly what you receive, but in key value pairs. One minor exception is the `Output` property. This is an array containing each output line. For example,  say we want to get all peers, which Asterisk will send back `PeerEntry` events when we send a `SIPPeers` action.  For the [docs]() for this, Asterisk will send back the following data:
+
+```
+Event: PeerEntry
+Channeltype: SIP
+ObjectName: 9915057
+ChanObjectType: peer
+IPaddress: 10.64.72.166
+IPport: 5060
+Dynamic: yes
+Natsupport: no
+ACL: no
+Status: OK (5 ms)
+```
+
+So now lets see how DAMI will send back the data:
+
+```typescript
+Dami.on("PeerEntry", (data: DAMIData) => {
+ console.log(data) // { Event: "PeerEntry", Channeltype: "SIP", ObjectName: 9915057, ... }
+})
+Dami.to("SIPPeers", {})
+```
+
 ## Projects Using DAMI
 
 - [Chatsterisk](https://github.com/ebebbington/chatsterisk/src/ami/app.ts) - My own personal learning project. It uses DAMI to aid in making SIP calls through the browser.
