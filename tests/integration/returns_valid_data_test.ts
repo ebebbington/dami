@@ -40,6 +40,7 @@ Deno.test({
     Dami.to("SIPPeers", {})
     await setTimeout(() => {
       // Check response data has ONLY the set amount of properties, and assert that data in those properties
+      //console.log(fullyBootedRes)
       const numberOfProps = Object.keys(fullyBootedRes).length
       Rhum.asserts.assertEquals(numberOfProps, 7) // "FullyBooted" returns 7 props
       Rhum.asserts.assertEquals(fullyBootedRes.Event, "FullyBooted")
@@ -50,9 +51,8 @@ Deno.test({
       // And ensure things that trigger multiple events are correct
       Rhum.asserts.assertEquals(peerEntryRes.length, 2)
       const [numberOfProps2, numberOfProps3] = [Object.keys(peerEntryRes[0]).length, Object.keys(peerEntryRes[1]).length]
-      Rhum.asserts.assertEquals(numberOfProps2, 18)
-      Rhum.asserts.assertEquals(numberOfProps3, 18)
-      Rhum.asserts.assertEquals(numberOfProps, 7) // "FullyBooted" returns 7 props
+      Rhum.asserts.assertEquals(numberOfProps2, 16)
+      Rhum.asserts.assertEquals(numberOfProps3, 16)
       Rhum.asserts.assertEquals(peerEntryRes[0].Event, "PeerEntry")
       Rhum.asserts.assertEquals(peerEntryRes[0].Channeltype, "SIP")
       Rhum.asserts.assertEquals(peerEntryRes[0].ObjectName, 6001)
@@ -69,8 +69,6 @@ Deno.test({
       Rhum.asserts.assertEquals(peerEntryRes[0].ACL, "no")
       Rhum.asserts.assertEquals(peerEntryRes[0].Status, "Unmonitored")
       Rhum.asserts.assertEquals(peerEntryRes[0].RealtimeDevice, "no")
-      Rhum.asserts.assertEquals(peerEntryRes[0].Description, 0)
-      Rhum.asserts.assertEquals(peerEntryRes[0].Accountcode, 0)
       Rhum.asserts.assertEquals(peerEntryRes[1].Event, "PeerEntry")
       Rhum.asserts.assertEquals(peerEntryRes[1].Channeltype, "SIP")
       Rhum.asserts.assertEquals(peerEntryRes[1].ObjectName, 6002)
@@ -87,8 +85,6 @@ Deno.test({
       Rhum.asserts.assertEquals(peerEntryRes[1].ACL, "no")
       Rhum.asserts.assertEquals(peerEntryRes[1].Status, "Unmonitored")
       Rhum.asserts.assertEquals(peerEntryRes[1].RealtimeDevice, "no")
-      Rhum.asserts.assertEquals(peerEntryRes[1].Description, 0)
-      Rhum.asserts.assertEquals(peerEntryRes[1].Accountcode, 0)
       Dami.close()
     }, 2000);
   }
