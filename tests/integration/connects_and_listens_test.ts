@@ -47,7 +47,7 @@ Deno.test({
     }, 2000);
 
     // can send/trigger events
-    Dami.to("SIPPeers", {});
+    await Dami.to("SIPPeers", {});
     await setTimeout(() => {
       Rhum.asserts.assertEquals(peerEntryResults.length, 2);
       Rhum.asserts.assertEquals(peerEntryResults[0].ObjectName, 6001);
