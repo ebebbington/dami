@@ -153,7 +153,7 @@ export class DAMI {
               "Invalid response from event received from the AMI. Closing connection",
               "error",
             );
-            this.conn!.close();
+            this.close();
             break;
           } else {
             this.log("Received event from the AMI", "info");
@@ -166,7 +166,7 @@ export class DAMI {
           "error",
         );
         try {
-          this.conn!.close();
+          this.close();
         } catch (err) {
           // do nothing
         }
@@ -205,6 +205,7 @@ export class DAMI {
     function formatArrayIntoObject(arr: string[]): DAMIData {
       arr = arr.filter((data) => data !== ""); // strip empty lines
       let responseObject: DAMIData = {};
+      // Create key value pairs from each line in the response
       arr.forEach((data) => { // data = "Something: something else"
         // If it has an "Output: ..." line, then there's a  chance there are multiple Output lines
         if (data.indexOf("Output: ") === 0) { // we do this because there are multiple "Output: " items returned (eg multiple items in the array), so when we do  `responseObj[key] = value`, it just overwrites the data
@@ -224,21 +225,16 @@ export class DAMI {
             responseObject["Output"].push(dataSplit[1]);
           }
         } else { // it's a event response
-          const dataSplit = data.split(":");
-          if (dataSplit.length === 1) { // eg data = "Asterisk ..." (and not an actual property
+          const [name, value] = data.split(": ");
+          if (!value) { // eg data = "Asterisk ..." (and not an actual property), so key is the whole line and value isnt defined
             return;
           }
-          const name = dataSplit[0];
-          let value: string | number = dataSplit[1];
-          // Values  can have a space before the value, due to the split: "a: b".split(":") === ["a", " b"]
-          if (value[0] === " ") {
-            value = value.substring(1);
-          }
           // If the value is a number, make it so
-          if (!isNaN(Number(dataSplit[1]))) {
-            value = Number(value);
+          if (!isNaN(Number(value))) {
+            responseObject[name] = Number(value);
+          } else {
+            responseObject[name] = value;
           }
-          responseObject[name] = value;
         }
       });
       return responseObject;
@@ -302,46 +298,18 @@ export class DAMI {
    * @param chunk - Response from AMI
    */
   private async handleAMIResponse(chunk: Uint8Array): Promise<void> {
-    const data = this.formatAMIResponse(chunk);
-    if (Array.isArray(data)) {
-      //  Special case for the FullyBooted event, where it is sent as 2 blocks on auth, and 1 block when failed auth
-      if (data[1] && data[1]["Event"] === "FullyBooted") {
-        data[1]["Response"] = data[0]["Response"];
-        data[1]["Message"] = data[0]["Message"];
-      }
-
-      data.forEach(async (d) => {
-        if (!d["Event"]) {
-          return; // is a command
-        }
-        const event: string = d["Event"].toString();
-        if (event) {
-          if (this.listeners.has(event)) {
-            this.log("Calling listener for " + event, "info");
-            const listener = this.listeners.get(event);
-            if (listener) {
-              await listener(d);
-            }
-          } else {
-            this.log(
-              "No listener is set for the event `" + event + "`",
-              "info",
-            );
-          }
-        }
-      });
-    } else {
-      if (!data["Event"]) {
+    const runChecksOnResponseAndSend = async (obj: DAMIData) => {
+      if (!obj["Event"]) {
         return;
       }
       // else it's  an asterisk event
-      const event: string = data["Event"].toString();
+      const event: string = obj["Event"].toString();
       if (event) {
         if (this.listeners.has(event)) {
           this.log("Calling listener for " + event, "info");
           const listener = this.listeners.get(event);
           if (listener) {
-            await listener(data);
+            await listener(obj);
           }
         } else {
           this.log(
@@ -350,6 +318,19 @@ export class DAMI {
           );
         }
       }
+    };
+    const data = this.formatAMIResponse(chunk);
+    if (Array.isArray(data)) {
+      //  Special case for the FullyBooted event, where it is sent as 2 blocks on auth, and 1 block when failed auth
+      if (data[1] && data[1]["Event"] === "FullyBooted") {
+        data[1]["Response"] = data[0]["Response"];
+        data[1]["Message"] = data[0]["Message"];
+      }
+      for (const d of data) {
+        await runChecksOnResponseAndSend(d);
+      }
+    } else {
+      await runChecksOnResponseAndSend(data);
     }
   }
 
