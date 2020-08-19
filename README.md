@@ -1,5 +1,5 @@
 <p align="center">
-  <img height="200" src="./dami-logo.png" alt="DAMI logo">
+  <img height="200" src="https://raw.githubusercontent.com/ebebbington/dami/master/dami-logo.png" alt="DAMI logo">
   <h1 align="center">DAMI</h1>
 </p>
 <p align="center">
