@@ -72,8 +72,8 @@ Rhum.testPlan("tests/unit/dami_test.ts", () => {
   Rhum.testSuite("triggerEvent()", () => {
     Rhum.testCase("Returns the correct object", () => {
       //  const res = await Dami.triggerEvent()
-    })
-  })
+    });
+  });
   Rhum.testSuite("triggerEvent()", () => {
     Rhum.testCase(
       "Triggers and returns the expected event when using a callback",
