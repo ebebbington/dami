@@ -178,6 +178,8 @@ export class DAMI {
             // We only care that it is a set object
             if (chunk) {
               const formattedResponse = this.formatAMIResponse(chunk);
+              console.log(2)
+              console.log(formattedResponse)
               // Ignore auth event (sent straight away so we just need to ignore)
               const isAuthEvent = Array.isArray(formattedResponse)
                 ? formattedResponse.filter((res) =>
@@ -231,6 +233,8 @@ export class DAMI {
 
       // Now with all those responses in an array, combine each one into a single object (using each property of each item)
       let responseObj: DAMIData = {};
+      console.log(1)
+      console.log(responses)
       for (const response of responses) {
         Object.keys(response).forEach((key) => {
           responseObj[key] = response[key];
