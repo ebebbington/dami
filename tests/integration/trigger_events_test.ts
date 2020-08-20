@@ -31,8 +31,8 @@ const expectedSipConfResponse = {
   "Line-000002-000002": "context=from-internal",
   "Line-000002-000003": "disallow=all",
   "Line-000002-000004": "allow=ulaw",
-  "Line-000002-000005": "secret=othersecretpassword"
-}
+  "Line-000002-000005": "secret=othersecretpassword",
+};
 
 function sleep(milliseconds: number) {
   var start = new Date().getTime();
@@ -51,35 +51,36 @@ Deno.test({
     const Dami = new DAMI(ami);
     await Dami.connectAndLogin(auth);
     await Dami.listen();
-    let response: DAMIData = {}
-    sleep(2000) // simulate some other stuff happening before the code triggers an event, such as maybe a POST req triggers one
-    await Dami.triggerEvent("GetConfig", { Filename: "sip.conf"}, (data) => {
-      response = data
-      Rhum.asserts.assertEquals(data, expectedSipConfResponse)
-    })
-    sleep(2000) // simulate some other stuff happening before the code triggers an event, such as maybe a POST req triggers one
+    let response: DAMIData = {};
+    sleep(2000); // simulate some other stuff happening before the code triggers an event, such as maybe a POST req triggers one
+    await Dami.triggerEvent("GetConfig", { Filename: "sip.conf" }, (data) => {
+      response = data;
+      Rhum.asserts.assertEquals(data, expectedSipConfResponse);
+    });
+    sleep(2000); // simulate some other stuff happening before the code triggers an event, such as maybe a POST req triggers one
     await setTimeout(() => {
-      Rhum.asserts.assertEquals(response, expectedSipConfResponse)
-      Dami.close()
-    }, 3000)
-  }
-})
+      Rhum.asserts.assertEquals(response, expectedSipConfResponse);
+      Dami.close();
+    }, 3000);
+  },
+});
 
 Deno.test({
-  name: "Can trigger an event and returns the response if no callback is passed in",
+  name:
+    "Can trigger an event and returns the response if no callback is passed in",
   sanitizeOps: false,
   sanitizeResources: false,
   async fn(): Promise<void> {
     const Dami = new DAMI(ami);
     await Dami.connectAndLogin(auth);
     await Dami.listen();
-    sleep(2000) // simulate some other stuff happening before the code triggers an event, such as maybe a POST req triggers one
-    const res = await Dami.triggerEvent("GetConfig", { Filename: "sip.conf" })
+    sleep(2000); // simulate some other stuff happening before the code triggers an event, such as maybe a POST req triggers one
+    const res = await Dami.triggerEvent("GetConfig", { Filename: "sip.conf" });
     // It should contain EVERYTHING, even if asterisk sent multiple events
-    Rhum.asserts.assertEquals(res, expectedSipConfResponse)
-    Dami.close()
-  }
-})
+    Rhum.asserts.assertEquals(res, expectedSipConfResponse);
+    Dami.close();
+  },
+});
 
 Deno.test({
   name: "Can handle user errors for example error responses",
@@ -89,12 +90,15 @@ Deno.test({
     const Dami = new DAMI(ami);
     await Dami.connectAndLogin(auth);
     await Dami.listen();
-    sleep(2000) // simulate some other stuff happening before the code triggers an event, such as maybe a POST req triggers one
-    const res = await Dami.triggerEvent("GetConfig", { Filename: "rtp.conf" })
+    sleep(2000); // simulate some other stuff happening before the code triggers an event, such as maybe a POST req triggers one
+    const res = await Dami.triggerEvent("GetConfig", { Filename: "rtp.conf" });
     // It should contain EVERYTHING, even if asterisk sent multiple events
-    Rhum.asserts.assertEquals(res, { Response: "Error", "Message": "Config file has invalid format"})
-    Dami.close()
-  }
+    Rhum.asserts.assertEquals(
+      res,
+      { Response: "Error", "Message": "Config file has invalid format" },
+    );
+    Dami.close();
+  },
 });
 
 Deno.test({
@@ -105,22 +109,25 @@ Deno.test({
     const Dami = new DAMI(ami);
     await Dami.connectAndLogin(auth);
     await Dami.listen();
-    const peerEntryResults: DAMIData[] = []
+    const peerEntryResults: DAMIData[] = [];
     Dami.on("PeerEntry", (data) => {
       peerEntryResults.push(data);
     });
-    sleep(2000) // simulate some other stuff happening before the code triggers an event, such as maybe a POST req triggers one
-    const res = await Dami.triggerEvent("GetConfig", { Filename: "rtp.conf" })
-    Rhum.asserts.assertEquals(res, { Response: "Error", "Message": "Config file has invalid format"});
+    sleep(2000); // simulate some other stuff happening before the code triggers an event, such as maybe a POST req triggers one
+    const res = await Dami.triggerEvent("GetConfig", { Filename: "rtp.conf" });
+    Rhum.asserts.assertEquals(
+      res,
+      { Response: "Error", "Message": "Config file has invalid format" },
+    );
     await Dami.to("SIPPeers", {});
-    sleep(10000)
+    sleep(10000);
     await setTimeout(() => {
       Rhum.asserts.assertEquals(peerEntryResults.length, 2);
       Rhum.asserts.assertEquals(peerEntryResults[0].ObjectName, 6001);
       Rhum.asserts.assertEquals(peerEntryResults[1].ObjectName, 6002);
       Dami.close();
     }, 3000);
-  }
+  },
 });
 
 // HOW DO I KEEP A CONSTANT LISTENER, AS WELL AS ANOTHER LISTENER I CAN ESSENTIALLY MAKE QUERIES TO. ONCE WE TRY TO SEND MESSAGE AFTER TRIGGER, NO LISTENERS SEEM TO GET THEM
