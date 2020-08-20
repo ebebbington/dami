@@ -179,7 +179,7 @@ Dami.to("Originate",  {
 // Actions that trigger events will also call the respective handler. Sending to `SIPPeers` will trigger a `PeerEntry` that the above will receive
 Dami.to("SIPPeers", {})
 
-// Another way can be `triggerEvent`. This must be used for events that don't have a specific event name, for example GetConfig
+// Another way can be `triggerEvent`. This must be used for events that don't have a specific event name, for example `GetConfig`
 const extensionContent: DAMIData = await Dami.triggerEvent("GetConfig", { Filename: "extensions.conf" })
 // or even use callbacks
 await Dami.triggerEvent("GetConfig", { Filename: "extensions.conf" }, (data: DAMIData) => {
