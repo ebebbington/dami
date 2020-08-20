@@ -281,7 +281,7 @@ Dami.on("Hangup", (data) => {
 
 ### `DAMI.triggerEvent(actionName: string, data: DAMIData, cb?: (data: DAMIData) => void): Promise<null|DAMIData>`
 
-Manually trigger events and get the response on that very line of code.
+Manually trigger events and get the response on that very line of code, mainly used for events sent by Asterisk that doesn't return a `Event` field.
 
 In cases where multiple data blocks can be sent back from Asterisk instead of one single response, for example for `GetConfig`, DAMI will combine all responses into a single object
 

@@ -170,7 +170,7 @@ export class DAMI {
       for await (const chunk of Deno.iter(this.conn!)) {
         if (this.command_in_progress === true) {
           // @ts-ignore because we do actually change the variable above, but the tsc is complaining true and false dont overlap
-          if (timeToWaitReached === true) { // NEVER REACHED BECAUSE ALL EVENTS ARE RECIEVED BEFORE THE TIMOUT, SO WHEN TIME TO WAIT IS TRUE, THE CODE PRETTY MUCH HANGS ON for await  ... (essentially still waiting)
+          if (timeToWaitReached === true) {
             this.command_in_progress = false;
             break;
           } else {
