@@ -164,7 +164,7 @@ export class DAMI {
         } catch (err) {
           // loop might already be finished
         }
-      }, 1000);
+      }, 2000);
 
       let responses: DAMIData[] = [];
       for await (const chunk of Deno.iter(this.conn!)) {
