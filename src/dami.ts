@@ -41,7 +41,7 @@ export class DAMI {
   /**
    * Tells DAMI if a command is in progress for the trigger event method
    */
-  private command_in_progress: boolean = false;
+  private command_in_progress = false;
 
   /**
    * @param configs - Hostname and port of the AMI to connect to
