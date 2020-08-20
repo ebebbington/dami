@@ -61,7 +61,6 @@ Rhum.testPlan("tests/unit/dami_test.ts", () => {
       () => {
         const Dami = new DAMI(ami);
         Dami.on("SomeEvent", (data) => {
-          console.log("got an event");
         });
       },
     );

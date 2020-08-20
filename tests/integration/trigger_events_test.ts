@@ -53,13 +53,10 @@ Deno.test({
     await Dami.listen();
     let response: DAMIData = {}
     sleep(2000) // simulate some other stuff happening before the code triggers an event, such as maybe a POST req triggers one
-    console.log('reached here')
-
     await Dami.triggerEvent("GetConfig", { Filename: "sip.conf"}, (data) => {
       response = data
       Rhum.asserts.assertEquals(data, expectedSipConfResponse)
     })
-    console.log('maybe not reached here')
     sleep(2000) // simulate some other stuff happening before the code triggers an event, such as maybe a POST req triggers one
     await setTimeout(() => {
       Rhum.asserts.assertEquals(response, expectedSipConfResponse)
@@ -110,21 +107,20 @@ Deno.test({
     await Dami.listen();
     const peerEntryResults: DAMIData[] = []
     Dami.on("PeerEntry", (data) => {
-      console.log('got data')
       peerEntryResults.push(data);
     });
     sleep(2000) // simulate some other stuff happening before the code triggers an event, such as maybe a POST req triggers one
     const res = await Dami.triggerEvent("GetConfig", { Filename: "rtp.conf" })
     Rhum.asserts.assertEquals(res, { Response: "Error", "Message": "Config file has invalid format"});
     await Dami.to("SIPPeers", {});
+    sleep(10000)
     await setTimeout(() => {
-      console.log(peerEntryResults)
       Rhum.asserts.assertEquals(peerEntryResults.length, 2);
       Rhum.asserts.assertEquals(peerEntryResults[0].ObjectName, 6001);
       Rhum.asserts.assertEquals(peerEntryResults[1].ObjectName, 6002);
       Dami.close();
-    }, 4000);
+    }, 3000);
   }
 });
 
-//  todo doesnt interfere with listen
+// HOW DO I KEEP A CONSTANT LISTENER, AS WELL AS ANOTHER LISTENER I CAN ESSENTIALLY MAKE QUERIES TO. ONCE WE TRY TO SEND MESSAGE AFTER TRIGGER, NO LISTENERS SEEM TO GET THEM

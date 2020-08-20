@@ -26,6 +26,8 @@ export class DAMI {
    */
   private readonly configs: IConfigs;
 
+  private auth: { username: string, secret: string}|null = null
+
   /**
    * The connection to the AMI
    */
@@ -69,6 +71,7 @@ export class DAMI {
   public async connectAndLogin(
     auth: { username: string; secret: string },
   ): Promise<void> {
+    this.auth = auth
     if (!this.conn) {
       // Connect
       this.conn = await Deno.connect(
@@ -113,21 +116,19 @@ export class DAMI {
     this.listeners.set(eventName, cb);
   }
 
-  private handleTriggeredResponse () {
-    this.command_in_progress = false
-  }
-
   /**
-   * Send an action, to get the AMI to trigger an event, which you can handle.
+   * Send an action, to get the AMI to trigger an event, which you can handle directly.
+   *
+   * Use case for this, could be sending the action `GetConfig`
    *
    * ```ts
    * // We want to get the SIP peers
    * await Dami.triggerEvent("SIPPeers", {}, (data) => {
-   *   console.log(data["Event"]) // "PeerlistComplete"
+   *   console.log(data.length) // 2
+   *   console.log(data[0]["Event]) // PeerEntry
    * }
    * // or
    * const res = await Dami.triggerEvent("SIPPeers", {});
-   * console.log(res["Event"] // "PeerlistComplete"
    * ```
    *
    * @param actionName - The name of the action
@@ -135,18 +136,27 @@ export class DAMI {
    * @param cb - The callback to handle the response for
    */
   public async triggerEvent (actionName: string, data: DAMIData, cb?: (data: DAMIData) => void): Promise<null|DAMIData> {
+    // Close the connection so our `listen` method stops listening. We cannot seem to have 2 listeners at the same time.
+    this.close()
+    this.conn = null
+    // Log back in, not ideal but no other way i can figure this out
+    if (!this.auth) {
+      this.log("Missing authentication credentials.", "error")
+      return null
+    }
+    await this.connectAndLogin(this.auth)
     this.command_in_progress = true;
     // try/catch just in case anything possibly fails, we can set the progress to false, so the `listen` method can continue  to work
     try {
       const message = this.formatAMIMessage(actionName, data);
       await this.conn!.write(message);
 
-      // Because atserisk can sometimes not send all the data at once (more than 1 event), we can't just count on returning the first response. So here we just wait 1s and combine all the responses  into one
+      // Because asterisk can sometimes not send all the data at once (more than 1 event), we can't just count on returning the first response. So here we just wait 1s and combine all the responses  into one
       let timeToWaitReached: boolean = false
       setTimeout(async () => {
         timeToWaitReached = true
         try {
-          this.conn!.write(message) // When done, make the server send an event, because the `if time to wait = true` is never reached  - the  loop handles each event before the timeout, so the  loop is still just hanging, waiting for a  response before it can check the conditional
+          await this.conn!.write(message) // When done, make the server send an event, because the `if time to wait = true` is never reached  - the  loop handles each event before the timeout, so the  loop is still just hanging, waiting for a  response before it can check the conditional
         } catch (err) {
           // loop might already be finished
         }
@@ -154,43 +164,57 @@ export class DAMI {
 
       let responses: DAMIData[] = []
       for await (const chunk of Deno.iter(this.conn!)) {
-        // @ts-ignore because we do actually change the variable above, but the tsc is complaining true and false dont overlap
-        if (timeToWaitReached === true) {// NEVER REACHED BECAUSE ALL EVENTS ARE RECIEVED BEFORE THE TIMOUT, SO WHEN TIME TO WAIT IS TRUE, THE CODE PRETTY MUCH HANGS ON for await  ... (essentially still waiting)
+        if (this.command_in_progress === true) {
+          // @ts-ignore because we do actually change the variable above, but the tsc is complaining true and false dont overlap
+          if (timeToWaitReached === true) {// NEVER REACHED BECAUSE ALL EVENTS ARE RECIEVED BEFORE THE TIMOUT, SO WHEN TIME TO WAIT IS TRUE, THE CODE PRETTY MUCH HANGS ON for await  ... (essentially still waiting)
+            this.command_in_progress = false
+            break
+          } else {
+
+            // Push the response to an array to collect it whilst time to wait hasn't been reached
+            // We only care that it is a set object
+            if (chunk) {
+              const formattedResponse = this.formatAMIResponse(chunk);
+              // Ignore auth event (sent straight away so we just need to ignore)
+              const isAuthEvent = Array.isArray(formattedResponse) ?
+                  formattedResponse.filter(res => res["Event"] === "FullyBooted").length > 0
+                  :
+                  formattedResponse["Event"] === "FullyBooted";
+              if (isAuthEvent === false) {
+                // Push each 'event block'
+                if (Array.isArray(formattedResponse)) {
+                  for (const response of formattedResponse) {
+                    responses.push(response)
+                  }
+                } else { // It's an object so just push that
+                  responses.push(formattedResponse)
+                }
+
+                // Check if error responses, only for logging purposes
+                if (Array.isArray(formattedResponse) && formattedResponse[0]["Response"] === "Error") {
+                  this.log(formattedResponse[0]["Message"].toString(), "error")
+                } else if (formattedResponse && !Array.isArray(formattedResponse) && formattedResponse["Response"]) {
+                  if (formattedResponse["Response"] && formattedResponse["Response"] === "Error") {
+                    this.log(formattedResponse["Message"].toString(), "error")
+                  }
+                }
+
+                // We could instead do something  like:
+                // const response = this.formatAMIResponse(chunk)
+                // if (response["Event"] === actionEventPairs[actionName]) {
+                //   res = response;
+                //   //break; maybe?
+                // }
+                // So the event name on the response will match what  triggers it. This is used in case an event is sent back to us but due to race conditions, the event isn't related, for example.. we listen BUT asterisk sends a register event - that isnt what we want is it. We are hoping to pick up a single event and thats it
+                //  Where actionEventPairs is `{ SIPPeers: ["PeerEntry, PeerlistComplete"],  GetConfig: "?" }`
+                // Those are the only two i know, we can  mention in the  docs that is people wish for more, they can make an issue and ill add it
+              }
+            }
+          }
+        } else {
           break
         }
-
-        // Push the response to an array to collect it whilst time to wait hasn't been reached
-        // We only care that it is a set object
-        if (chunk) {
-          const formattedResponse = this.formatAMIResponse(chunk);
-          if (Array.isArray(formattedResponse)) {
-            for (const response of formattedResponse) {
-              responses.push(response)
-            }
-          } else {
-            responses.push(formattedResponse)
-          }
-
-          // Check if error responses
-          if (Array.isArray(formattedResponse) && formattedResponse[0]["Response"] === "Error") {
-            this.log(formattedResponse[0]["Message"].toString(), "error")
-          } else if (formattedResponse && !Array.isArray(formattedResponse) && formattedResponse["Response"]) {
-            if (formattedResponse["Response"] && formattedResponse["Response"] === "Error") {
-              this.log(formattedResponse["Message"].toString(), "error")
-            }
-          }
-
-            // We could instead do something  like:
-            // const response = this.formatAMIResponse(chunk)
-            // if (response["Event"] === actionEventPairs[actionName]) {
-            //   res = response;
-            //   //break; maybe?
-            // }
-            // So the event name on the response will match what  triggers it. This is used in case an event is sent back to us but due to race conditions, the event isn't related, for example.. we listen BUT asterisk sends a register event - that isnt what we want is it. We are hoping to pick up a single event and thats it
-            //  Where actionEventPairs is `{ SIPPeers: ["PeerEntry, PeerlistComplete"],  GetConfig: "?" }`
-            // Those are the only two i know, we can  mention in the  docs that is people wish for more, they can make an issue and ill add it
-          }
-        }
+      }
 
       // Now with all those responses in an array, combine each one into a single object (using each property of each item)
       let responseObj: DAMIData= {}
@@ -201,7 +225,8 @@ export class DAMI {
       }
 
       // And call the callback or return the data
-      this.command_in_progress = false
+      this.command_in_progress = false;
+      await this.listen()
       if (cb) {
         await cb(responseObj)
       } else {
@@ -221,30 +246,26 @@ export class DAMI {
     (async () => {
       try {
         for await (const chunk of Deno.iter(this.conn!)) {
-          if (this.command_in_progress  === true) {
-            return
-          }
-          if (!chunk) {
-            this.log(
-              "Invalid response from event received from the AMI. Closing connection",
-              "error",
-            );
-            this.close();
-            break;
-          } else {
-            this.log("Received event from the AMI", "info");
-            await this.handleAMIResponse(chunk);
-          }
+            if (!chunk) {
+              this.log(
+                  "Invalid response from event received from the AMI. Closing connection",
+                  "error",
+              );
+              this.close();
+              break;
+            } else {
+              this.log("Received event from the AMI", "info");
+              await this.handleAMIResponse(chunk);
+            }
         }
       } catch (e) {
-        this.log(
-          "Connection failed whilst receiving an event from the AMI. The connection may already be closed. Stopping.",
-          "error",
-        );
-        try {
+        // because when `triggerEvent` is called, we close the conn so it will fail, but nothing is actually wrong
+        if (this.command_in_progress === false) {
+          this.log(
+              "Connection failed whilst receiving an event from the AMI. The connection may already be closed. Stopping.",
+              "error",
+          );
           this.close();
-        } catch (err) {
-          // do nothing
         }
       }
     })();
