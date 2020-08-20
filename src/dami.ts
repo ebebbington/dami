@@ -164,7 +164,7 @@ export class DAMI {
         } catch (err) {
           // loop might already be finished
         }
-      }, 2000);
+      }, 1000);
 
       let responses: DAMIData[] = [];
       for await (const chunk of Deno.iter(this.conn!)) {
@@ -177,16 +177,19 @@ export class DAMI {
             // Push the response to an array to collect it whilst time to wait hasn't been reached
             // We only care that it is a set object
             if (chunk) {
-              const formattedResponse = this.formatAMIResponse(chunk);
-              console.log(2)
-              console.log(formattedResponse)
-              // Ignore auth event (sent straight away so we just need to ignore)
-              const isAuthEvent = Array.isArray(formattedResponse)
+              let formattedResponse = this.formatAMIResponse(chunk);
+              // Ignore auth event (sent straight away so we just need to ignore),  BUT it's possible the chunk contains the event we need
+              let hasAuthEvent = Array.isArray(formattedResponse)
                 ? formattedResponse.filter((res) =>
                   res["Event"] === "FullyBooted"
                 ).length > 0
                 : formattedResponse["Event"] === "FullyBooted";
-              if (isAuthEvent === false) {
+              if (hasAuthEvent && Array.isArray(formattedResponse)) {  // special case for chunk being: [{ response: ... }, { event: fullybooted, ... }, {  CHUNK WE NEED}]
+                formattedResponse.splice(0, 2)
+                hasAuthEvent = false
+              }
+
+              if (hasAuthEvent === false) {
                 // Push each 'event block'
                 if (Array.isArray(formattedResponse)) {
                   for (const response of formattedResponse) {
@@ -233,8 +236,6 @@ export class DAMI {
 
       // Now with all those responses in an array, combine each one into a single object (using each property of each item)
       let responseObj: DAMIData = {};
-      console.log(1)
-      console.log(responses)
       for (const response of responses) {
         Object.keys(response).forEach((key) => {
           responseObj[key] = response[key];
