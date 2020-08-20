@@ -77,7 +77,6 @@ Status: OK (5 ms)
 
 The data returned from DAMI will look like:
 
-
 ```typescript
 Dami.on("PeerEntry", (data: DAMIData) => {
  console.log(data) // { Event: "PeerEntry", Channeltype: "SIP", ObjectName: 9915057, ... }

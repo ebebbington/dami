@@ -57,11 +57,11 @@ Deno.test({
       response = data;
       Rhum.asserts.assertEquals(data, expectedSipConfResponse);
     });
-    sleep(2000); // simulate some other stuff happening before the code triggers an event, such as maybe a POST req triggers one
+    sleep(4000); // simulate some other stuff happening before the code triggers an event, such as maybe a POST req triggers one
     await setTimeout(() => {
       Rhum.asserts.assertEquals(response, expectedSipConfResponse);
       Dami.close();
-    }, 3000);
+    }, 5000);
   },
 });
 
