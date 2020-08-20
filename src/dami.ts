@@ -184,9 +184,9 @@ export class DAMI {
                   res["Event"] === "FullyBooted"
                 ).length > 0
                 : formattedResponse["Event"] === "FullyBooted";
-              if (hasAuthEvent && Array.isArray(formattedResponse)) {  // special case for chunk being: [{ response: ... }, { event: fullybooted, ... }, {  CHUNK WE NEED}]
-                formattedResponse.splice(0, 2)
-                hasAuthEvent = false
+              if (hasAuthEvent && Array.isArray(formattedResponse)) { // special case for chunk being: [{ response: ... }, { event: fullybooted, ... }, {  CHUNK WE NEED}]
+                formattedResponse.splice(0, 2);
+                hasAuthEvent = false;
               }
 
               if (hasAuthEvent === false) {

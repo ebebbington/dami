@@ -70,23 +70,28 @@ Rhum.testPlan("tests/unit/dami_test.ts", () => {
     });
   });
   Rhum.testSuite("triggerEvent()", () => {
-    Rhum.testCase("Triggers and returns the expected event when using a callback", async () => {
-      const Dami = new DAMI(ami);
-      await Dami.connectAndLogin(auth);
-      //await Dami.listen()
-      let eventData;
-      // await Dami.triggerEvent("SIPPeers",  {}, (data) => {
-      //   eventData = data
-      //   //Dami.close()
-      // })
-      console.log('event data')
-      console.log(eventData)
-      Dami.close()
-    })
-    Rhum.testCase("Triggers and returns the expected event when assigning to a value", async () => {
-
-    })
-  })
+    Rhum.testCase(
+      "Triggers and returns the expected event when using a callback",
+      async () => {
+        const Dami = new DAMI(ami);
+        await Dami.connectAndLogin(auth);
+        //await Dami.listen()
+        let eventData;
+        // await Dami.triggerEvent("SIPPeers",  {}, (data) => {
+        //   eventData = data
+        //   //Dami.close()
+        // })
+        console.log("event data");
+        console.log(eventData);
+        Dami.close();
+      },
+    );
+    Rhum.testCase(
+      "Triggers and returns the expected event when assigning to a value",
+      async () => {
+      },
+    );
+  });
 });
 
 Rhum.run();
