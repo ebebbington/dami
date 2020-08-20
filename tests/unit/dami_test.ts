@@ -61,7 +61,6 @@ Rhum.testPlan("tests/unit/dami_test.ts", () => {
       () => {
         const Dami = new DAMI(ami);
         Dami.on("SomeEvent", (data) => {
-          console.log("got an event");
         });
       },
     );
@@ -70,24 +69,34 @@ Rhum.testPlan("tests/unit/dami_test.ts", () => {
     Rhum.testCase("Listens for events", () => {
     });
   });
-  // Rhum.testSuite("triggerEvent()", () => {
-  //   Rhum.testCase("Triggers and returns the expected event when using a callback", async () => {
-  //     const Dami = new DAMI(ami);
-  //     await Dami.connectAndLogin(auth);
-  //     //await Dami.listen()
-  //     let eventData;
-  //     // await Dami.triggerEvent("SIPPeers",  {}, (data) => {
-  //     //   eventData = data
-  //     //   //Dami.close()
-  //     // })
-  //     console.log('event data')
-  //     console.log(eventData)
-  //     Dami.close()
-  //   })
-  //   Rhum.testCase("Triggers and returns the expected event when assigning to a value", async () => {
-  //
-  //   })
-  // })
+  Rhum.testSuite("triggerEvent()", () => {
+    Rhum.testCase("Returns the correct object", () => {
+      //  const res = await Dami.triggerEvent()
+    });
+  });
+  Rhum.testSuite("triggerEvent()", () => {
+    Rhum.testCase(
+      "Triggers and returns the expected event when using a callback",
+      async () => {
+        const Dami = new DAMI(ami);
+        await Dami.connectAndLogin(auth);
+        //await Dami.listen()
+        let eventData;
+        // await Dami.triggerEvent("SIPPeers",  {}, (data) => {
+        //   eventData = data
+        //   //Dami.close()
+        // })
+        console.log("event data");
+        console.log(eventData);
+        Dami.close();
+      },
+    );
+    Rhum.testCase(
+      "Triggers and returns the expected event when assigning to a value",
+      async () => {
+      },
+    );
+  });
 });
 
 Rhum.run();

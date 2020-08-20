@@ -26,6 +26,8 @@ export class DAMI {
    */
   private readonly configs: IConfigs;
 
+  private auth: { username: string; secret: string } | null = null;
+
   /**
    * The connection to the AMI
    */
@@ -35,6 +37,11 @@ export class DAMI {
    * Holds all events user wishes to listen on, where `string` is the event name
    */
   private listeners: Map<string, Function>;
+
+  /**
+   * Tells DAMI if a command is in progress for the trigger event method
+   */
+  private command_in_progress = false;
 
   /**
    * @param configs - Hostname and port of the AMI to connect to
@@ -49,7 +56,11 @@ export class DAMI {
    */
   public close() {
     this.log("Closing connection", "info");
-    this.conn!.close();
+    try {
+      this.conn!.close();
+    } catch (err) {
+      // dont  need to do anything
+    }
   }
 
   /**
@@ -60,11 +71,13 @@ export class DAMI {
   public async connectAndLogin(
     auth: { username: string; secret: string },
   ): Promise<void> {
+    this.auth = auth;
     if (!this.conn) {
       // Connect
       this.conn = await Deno.connect(
         { hostname: this.configs.hostname, port: this.configs.port },
       );
+
       this.log(
         `Connected to ${this.configs.hostname}:${this.configs.port}`,
         "info",
@@ -104,42 +117,145 @@ export class DAMI {
   }
 
   /**
-   * Send an action, to get the AMI to trigger an event, which you can handle.
+   * Send an action, to get the AMI to trigger an event, which you can handle directly.
+   *
+   * Use case for this, could be sending the action `GetConfig`
    *
    * ```ts
    * // We want to get the SIP peers
    * await Dami.triggerEvent("SIPPeers", {}, (data) => {
-   *   console.log(data["Event"]) // "PeerlistComplete"
+   *   console.log(data.length) // 2
+   *   console.log(data[0]["Event]) // PeerEntry
    * }
    * // or
    * const res = await Dami.triggerEvent("SIPPeers", {});
-   * console.log(res["Event"] // "PeerlistComplete"
    * ```
    *
    * @param actionName - The name of the action
    * @param data - Data to accompany the message
    * @param cb - The callback to handle the response for
    */
-  // public async triggerEvent (actionName: string, data: DAMIData, cb?: (data: DAMIData) => void): Promise<void|DAMIData> {
-  //   const message = this.formatAMIMessage(actionName, data);
-  //   await this.conn!.write(message);
-  //   let res;
-  //   for await (const chunk of Deno.iter(this.conn!)) {
-  //     if (chunk) {
-  //       const response = this.formatAMIResponse(chunk);
-  //       if (response["Event"] === actionEventPairs[actionName]) {
-  //         res = response;
-  //         //break;
-  //       }
-  //     }
-  //   }
-  //   if (cb) {
-  //     //@ts-ignore Because im unsure on how to fix the error of: "Argument of type 'DAMIData | void' is not assignable to parameter of type 'DAMIData'."
-  //     await cb(res)
-  //   } else {
-  //     return res
-  //   }
-  // }
+  public async triggerEvent(
+    actionName: string,
+    data: DAMIData,
+    cb?: (data: DAMIData) => void,
+  ): Promise<null | DAMIData> {
+    // Close the connection so our `listen` method stops listening. We cannot seem to have 2 listeners at the same time.
+    this.close();
+    this.conn = null;
+    // Log back in, not ideal but no other way i can figure this out
+    if (!this.auth) {
+      this.log("Missing authentication credentials.", "error");
+      return null;
+    }
+    await this.connectAndLogin(this.auth);
+    this.command_in_progress = true;
+    // try/catch just in case anything possibly fails, we can set the progress to false, so the `listen` method can continue  to work
+    try {
+      const message = this.formatAMIMessage(actionName, data);
+      await this.conn!.write(message);
+
+      // Because asterisk can sometimes not send all the data at once (more than 1 event), we can't just count on returning the first response. So here we just wait 1s and combine all the responses  into one
+      let timeToWaitReached: boolean = false;
+      setTimeout(async () => {
+        timeToWaitReached = true;
+        try {
+          await this.conn!.write(message); // When done, make the server send an event, because the `if time to wait = true` is never reached  - the  loop handles each event before the timeout, so the  loop is still just hanging, waiting for a  response before it can check the conditional
+        } catch (err) {
+          // loop might already be finished
+        }
+      }, 1000);
+
+      let responses: DAMIData[] = [];
+      for await (const chunk of Deno.iter(this.conn!)) {
+        if (this.command_in_progress === true) {
+          // @ts-ignore because we do actually change the variable above, but the tsc is complaining true and false dont overlap
+          if (timeToWaitReached === true) {
+            this.command_in_progress = false;
+            break;
+          } else {
+            // Push the response to an array to collect it whilst time to wait hasn't been reached
+            // We only care that it is a set object
+            if (chunk) {
+              let formattedResponse = this.formatAMIResponse(chunk);
+              // Ignore auth event (sent straight away so we just need to ignore),  BUT it's possible the chunk contains the event we need
+              let hasAuthEvent = Array.isArray(formattedResponse)
+                ? formattedResponse.filter((res) =>
+                  res["Event"] === "FullyBooted"
+                ).length > 0
+                : formattedResponse["Event"] === "FullyBooted";
+              if (hasAuthEvent && Array.isArray(formattedResponse)) { // special case for chunk being: [{ response: ... }, { event: fullybooted, ... }, {  CHUNK WE NEED}]
+                formattedResponse.splice(0, 2);
+                hasAuthEvent = false;
+              }
+
+              if (hasAuthEvent === false) {
+                // Push each 'event block'
+                if (Array.isArray(formattedResponse)) {
+                  for (const response of formattedResponse) {
+                    responses.push(response);
+                  }
+                } else { // It's an object so just push that
+                  responses.push(formattedResponse);
+                }
+
+                // Check if error responses, only for logging purposes
+                if (
+                  Array.isArray(formattedResponse) &&
+                  formattedResponse[0]["Response"] === "Error"
+                ) {
+                  this.log(formattedResponse[0]["Message"].toString(), "error");
+                } else if (
+                  formattedResponse && !Array.isArray(formattedResponse) &&
+                  formattedResponse["Response"]
+                ) {
+                  if (
+                    formattedResponse["Response"] &&
+                    formattedResponse["Response"] === "Error"
+                  ) {
+                    this.log(formattedResponse["Message"].toString(), "error");
+                  }
+                }
+
+                // We could instead do something  like:
+                // const response = this.formatAMIResponse(chunk)
+                // if (response["Event"] === actionEventPairs[actionName]) {
+                //   res = response;
+                //   //break; maybe?
+                // }
+                // So the event name on the response will match what  triggers it. This is used in case an event is sent back to us but due to race conditions, the event isn't related, for example.. we listen BUT asterisk sends a register event - that isnt what we want is it. We are hoping to pick up a single event and thats it
+                //  Where actionEventPairs is `{ SIPPeers: ["PeerEntry, PeerlistComplete"],  GetConfig: "?" }`
+                // Those are the only two i know, we can  mention in the  docs that is people wish for more, they can make an issue and ill add it
+              }
+            }
+          }
+        } else {
+          break;
+        }
+      }
+
+      // Now with all those responses in an array, combine each one into a single object (using each property of each item)
+      let responseObj: DAMIData = {};
+      for (const response of responses) {
+        Object.keys(response).forEach((key) => {
+          responseObj[key] = response[key];
+        });
+      }
+
+      // And call the callback or return the data
+      this.command_in_progress = false;
+      await this.listen();
+      if (cb) {
+        await cb(responseObj);
+      } else {
+        return responseObj;
+      }
+      return null;
+    } catch (err) {
+      this.command_in_progress = false;
+      return null;
+    }
+  }
 
   /**
    * Listens for any events from the AMI and does ?? with them
@@ -161,14 +277,13 @@ export class DAMI {
           }
         }
       } catch (e) {
-        this.log(
-          "Connection failed whilst receiving an event from the AMI. The connection may already be closed. Stopping.",
-          "error",
-        );
-        try {
+        // because when `triggerEvent` is called, we close the conn so it will fail, but nothing is actually wrong
+        if (this.command_in_progress === false) {
+          this.log(
+            "Connection failed whilst receiving an event from the AMI. The connection may already be closed. Stopping.",
+            "error",
+          );
           this.close();
-        } catch (err) {
-          // do nothing
         }
       }
     })();
@@ -256,8 +371,9 @@ export class DAMI {
     //
     //   Event: PeerEntry
     // We dont want to override the data, as this has become a list. So in these cases, when we split using "\n", an item in the array that is empty denotes a new section appears after,  so say there is an empty item in the array, it could mean there are 2 `PeerEntry` blocks
-    const startOfNewSectionIndex = dataArr.indexOf("");
-    if (startOfNewSectionIndex !== -1) { // the event has multiple sections, so we put it into an array instead
+    const startOfNewSection = dataArr.indexOf("") !== -1 &&
+      dataArr.indexOf("") !== (dataArr.length - 1); // last bit is mainly if data comes back like: `["...", "...", ""]`, where it has an empty index but isn't actually a new block
+    if (startOfNewSection) { // the event has multiple sections, so we put it into an array instead
       const blocks: Array<Array<string>> = [];
       function loop(arr: string[]): void {
         if (arr[0] === "") { // has an empty 0th index, eg a 1+n section so  remove it
