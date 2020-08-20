@@ -33,6 +33,7 @@ jobs:
           docker-compose up -d
           deno test --allow-net --allow-env integration/connects_and_listens_test.ts
           deno test --allow-net --allow-env integration/returns_valid_data_test.ts
+          deno test --allow-net --allow-env integration/trigger_events_test.ts
 
   linter:
     runs-on: ubuntu-latest
