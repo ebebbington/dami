@@ -134,8 +134,8 @@ Dami.on("FullyBooted", async (data: DAMIData)  => { // event for when you authen
 })
 
 // Send an action (and get a response) - `ActionID` must be passed in
-const extensionsContent: DAMIData = await Dami.to("GetConfig", { Filename: "extensions.conf", ActionId: "custom id" }) // can return the response
-await Dami.to("GetConfig", { Filename: "extensions.conf", ActionID: "custom id" }, (data: DAMIData) => { // or use a callback
+const extensionsContent: DAMIData[] = await Dami.to("GetConfig", { Filename: "extensions.conf", ActionId: "custom id" }) // can return the response
+await Dami.to("GetConfig", { Filename: "extensions.conf", ActionID: "custom id" }, (data: DAMIData[]) => { // or use a callback
 
 })
 ```
@@ -164,7 +164,7 @@ const res: DAMIData[] = await Dami.to("Originate",  {
   ActionID: "custom id"
 })
 // or use a  callback
-await Dami.to("SIPPeers", { ActionID: "custom id" }, (data: DAMIData) => {
+await Dami.to("SIPPeers", { ActionID: "custom id" }, (data: DAMIData[]) => {
   
 })
 ```
