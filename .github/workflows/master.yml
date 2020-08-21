@@ -32,10 +32,10 @@ jobs:
           cd tests
           docker-compose up -d
           deno test --allow-net --allow-env integration/connects_test.ts
+          deno test --allow-net --allow-env integration/events_that_send_output_test.ts
           deno test --allow-net --allow-env integration/listen_test.ts
           deno test --allow-net --allow-env integration/returns_valid_data_test.ts
-          deno test --allow-net --allow-env integration/trigger_events_test.ts
-          deno test -A  integration/send_actions_test.ts
+          deno test -A integration/send_actions_test.ts
 
   linter:
     runs-on: ubuntu-latest

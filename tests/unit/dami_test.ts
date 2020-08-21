@@ -51,7 +51,7 @@ Rhum.testPlan("tests/unit/dami_test.ts", () => {
       const Dami = new DAMI(ami);
       await Dami.connectAndLogin(auth);
       await Dami.listen();
-      await Dami.to("GetConfig", {ActionID: 12});
+      await Dami.to("GetConfig", { ActionID: 12 });
       Dami.close();
     });
   });
