@@ -35,23 +35,23 @@ Deno.test({
       ActionID: 1,
     });
     Rhum.asserts.assertEquals(
-        //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
-        res[0]["Output"][0],
+      //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
+      res[0]["Output"][0],
       "Name/username             Host                                    Dyn Forcerport Comedia    ACL Port     Status      Description                      ",
     );
     Rhum.asserts.assertEquals(
-        //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
-        res[0]["Output"][1],
+      //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
+      res[0]["Output"][1],
       "6001                      (Unspecified)                            D  Auto (No)  No             0        Unmonitored                                  ",
     );
     Rhum.asserts.assertEquals(
-        //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
-        res[0]["Output"][2],
+      //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
+      res[0]["Output"][2],
       "6002                      (Unspecified)                            D  Auto (No)  No             0        Unmonitored                                  ",
     );
     Rhum.asserts.assertEquals(
-        //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
-        res[0]["Output"][3],
+      //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
+      res[0]["Output"][3],
       "2 sip peers [Monitored: 0 online, 0 offline Unmonitored: 0 online, 2 offline]",
     );
     Dami.close();
