@@ -157,7 +157,7 @@ Send a single action to the AMI. If an action triggers an event, the event respo
 
 ```typescript
 // Return a value
-const res: DAMIData[] = Dami.to("Originate",  {
+const res: DAMIData[] = await Dami.to("Originate",  {
   Channel: "sip/12345",
   Exten: 1234,
   Context: "default",
@@ -165,8 +165,60 @@ const res: DAMIData[] = Dami.to("Originate",  {
 })
 // or use a  callback
 await Dami.to("SIPPeers", { ActionID: "custom id" }, (data: DAMIData) => {
-
+  
 })
+```
+
+The `data`  for the `SIPPeers` callback would be:
+
+```
+[
+  {
+    Response: "Success",
+    ActionID: 12354,
+    EventList: "start",
+    Message: "Peer status list will follow"
+  },
+  {
+    Event: "PeerEntry",
+    ActionID: 12354,
+    Channeltype: "SIP",
+    ObjectName: 6001,
+    ChanObjectType: "peer",
+    IPaddress: "-none-",
+    IPport: 0,
+    Dynamic: "yes",
+    AutoForcerport: "yes",
+    Forcerport: "no",
+    AutoComedia: "no",
+    Comedia: "no",
+    VideoSupport: "no",
+    TextSupport: "no",
+    ACL: "no",
+    Status: "Unmonitored",
+    RealtimeDevice: "no"
+  },
+  {
+    Event: "PeerEntry",
+    ActionID: 12354,
+    Channeltype: "SIP",
+    ObjectName: 6002,
+    ChanObjectType: "peer",
+    IPaddress: "-none-",
+    IPport: 0,
+    Dynamic: "yes",
+    AutoForcerport: "yes",
+    Forcerport: "no",
+    AutoComedia: "no",
+    Comedia: "no",
+    VideoSupport: "no",
+    TextSupport: "no",
+    ACL: "no",
+    Status: "Unmonitored",
+    RealtimeDevice: "no"
+  },
+  { Event: "PeerlistComplete", ActionID: 12354, EventList: "Complete", ListItems: 2 }
+]
 ```
 
 ### Listen for Events
