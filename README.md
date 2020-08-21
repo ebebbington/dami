@@ -23,7 +23,7 @@
 
 ## What Is DAMI
 
-DAMI (Deno Asterisk Manager Interface) is an AMI client for Deno. It acts as an AMI client, and connects to your AMI on your Asterisk PBX. You can send any type of events to the AMI (through the [AMI API](https://www.voip-info.org/asterisk-manager-api/), as well as listen on the events your AMI sends. It is up to you on how you handle events, for example, to send a WebSocket message to a client when a call hangs up. See below on how this all works.
+DAMI (Deno Asterisk Manager Interface) is an AMI client for Deno. It acts as an AMI client, and connects to your AMI on your Asterisk PBX. You can send any type of actions to the AMI (through the [AMI API](https://www.voip-info.org/asterisk-manager-api/), as well as listen on the events your AMI sends. It is up to you on how you handle events, for example, to send a WebSocket message to a client when a call hangs up. See below on how this all works.
 
 ## How Does DAMI Work
 
@@ -90,7 +90,7 @@ If an action doesn't require extra parameters (such as `SIPPeers`), then just pa
 Dami.to("SIPPeers", {})
 ```
 
-DAMI supports sending actions and receiving events, regardless of whether you triggered them or not. DAMI also supports executing commands, with the use of `triggerEvents`.
+DAMI supports sending actions and receiving events, regardless of whether you triggered them or not. DAMI also supports executing commands.
 
 ## Projects Using DAMI
 
@@ -136,24 +136,12 @@ Dami.on("PeerEntry", (data: DAMIData) => { // If you have multiple peers, this c
   console.log(data) // { ObjectName: 6002, Event: "PeerEntry", ... }
 })
 Dami.to("SIPPeers", {})
-```
 
-Alternatively, you can use `triggerEvent` to manually trigger an event, but it's main use case is for executing commands. For example, say you want 'peer entries' (needs an action of 'SIPPeers') or 'contents of a config file' (needs the `GetConfig` command):
-
-```typescript
-// Without trigger events
-Dami.on("PeerEntry", (data) => {
+// Trigger events that don't return an `Event` property (such as `GetConfig`)
+const extensionsContent: DAMIData = await Dami.triggerEvent("GetConfig", { Filename: "extensions.conf" }) // can return the response
+await  Dami.triggerEvent("GetConfig", {  Filename: "extensions.conf"}, (data: DAMIData) => { // or use a callback
 
 })
-Dami.to("SIPPeers", {})
-// Not possible to send a command
-
-// With using trigger events
-const res = await Dami.triggerEvent("SIPPeers", { ... }) // can return the response
-await Dami.triggerEvent("SIPPeers", { ... }, (data) => { // or you can pass a callback
-  // data is an array with all peers
-})
-const extensionsContent: DAMIData = await Dami.triggerEvent("GetConfig", { Filename: "extensions.conf" })
 ```
 
 ## Examples
@@ -167,7 +155,9 @@ await Dami.connectAndLogin({ username: "admin", secret: "mysecret" }) // Connect
 
 If you watch the stdout for your Asterisk shell, you should see a login message
 
-### Send Actions
+### Send Actions 
+
+Send a single action to the AMI:
 
 ```typescript
 // Send an action
@@ -178,21 +168,36 @@ Dami.to("Originate",  {
 })
 // Actions that trigger events will also call the respective handler. Sending to `SIPPeers` will trigger a `PeerEntry` that the above will receive
 Dami.to("SIPPeers", {})
-
-// Another way can be `triggerEvent`. This must be used for events that don't have a specific event name, for example `GetConfig`
-const extensionContent: DAMIData = await Dami.triggerEvent("GetConfig", { Filename: "extensions.conf" })
-// or even use callbacks
-await Dami.triggerEvent("GetConfig", { Filename: "extensions.conf" }, (data: DAMIData) => {
-  
-})
 ```
 
 ### Listen for Events
 
 ```typescript
 // Listen on an event - can be triggered by `Dami.to("SIPPeers", {})`
-Dami.on("PeerEntry", (data) => {
+Dami.on("PeerEntry", (data: DAMIData) => {
 
+})
+Dami.on("FullyBooted", (data: DAMIData) => {
+
+})
+```
+
+### Send Actions **and** Receive Events
+
+Create a listener for an event, and send an action that will trigger that event:
+
+```typescript
+
+```
+
+Send an action where the response does not not contain an `Event` property (such as `GetConfig`), but still wish to get the response:
+
+```typescript
+// This must be used for events that don't have a specific event name, for example `GetConfig`
+const extensionContent: DAMIData = await Dami.triggerEvent("GetConfig", { Filename: "extensions.conf" })
+// or even use callbacks
+await Dami.triggerEvent("GetConfig", { Filename: "extensions.conf" }, (data: DAMIData) => {
+  
 })
 ```
 
@@ -201,7 +206,7 @@ Dami.on("PeerEntry", (data) => {
 This feature is very much in it's early stages, and doesn't really work as expected. Although you can do:
 
 ```typescript
-Dami.to("Command", {
+const response = await Dami.to("Command", {
   Command: "sip show peers"
 })
 ```
@@ -251,7 +256,7 @@ await Dami.connectAndLogin({ username: "admin", secret: "mysecret" })
 
 ### `DAMI.to(eventName: string, data: DAMIData): Promise<void>`
 
-Sends an event to the AMI, with data
+Sends an action to the AMI, with data if needed.
 
 ```typescript
 await Dami.to("Originate",  {
@@ -281,7 +286,7 @@ Dami.on("Hangup", (data) => {
 
 ### `DAMI.triggerEvent(actionName: string, data: DAMIData, cb?: (data: DAMIData) => void): Promise<null|DAMIData>`
 
-Manually trigger events and get the response on that very line of code, mainly used for events sent by Asterisk that doesn't return a `Event` field.
+Manually trigger events and get the response on that very line of code. Used for events sent by Asterisk that do not return a `Event` field (such as `GetConfig`).
 
 In cases where multiple data blocks can be sent back from Asterisk instead of one single response, for example for `GetConfig`, DAMI will combine all responses into a single object
 
