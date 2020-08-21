@@ -1,6 +1,6 @@
 import { DAMI, DAMIData } from "../../src/dami.ts";
 import { Rhum } from "../deps.ts";
-import {ami, auth} from "../utils.ts";
+import { ami, auth } from "../utils.ts";
 
 Deno.test({
   name: "Returns the expected data on a event response",
@@ -15,7 +15,7 @@ Deno.test({
       fullyBootedRes = data;
     });
     let peerEntryRes: Array<DAMIData> = [];
-    peerEntryRes = await Dami.to("SIPPeers", {ActionID: 12});
+    peerEntryRes = await Dami.to("SIPPeers", { ActionID: 12 });
     await setTimeout(() => {
       // Check response data has ONLY the set amount of properties, and assert that data in those properties
       const numberOfProps = Object.keys(fullyBootedRes).length;

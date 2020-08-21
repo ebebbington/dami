@@ -36,7 +36,7 @@ export class DAMI {
   /**
    * Used for sending events
    */
-  public action_conn: Deno.Conn | null = null
+  public action_conn: Deno.Conn | null = null;
 
   /**
    * Holds all events user wishes to listen on, where `string` is the event name
@@ -58,7 +58,7 @@ export class DAMI {
     this.log("Closing connection", "info");
     try {
       this.listener_conn!.close();
-      this.action_conn!.close()
+      this.action_conn!.close();
     } catch (err) {
       // dont  need to do anything
     }
@@ -77,17 +77,18 @@ export class DAMI {
       throw new Error("A connection has already been made");
     }
     // Connect
-    this.listener_conn = await Deno.connect(this.configs,
-    );
-    this.action_conn = await Deno.connect(this.configs)
+    this.listener_conn = await Deno.connect(this.configs);
+    this.action_conn = await Deno.connect(this.configs);
 
-    this.log(`Connected to ${this.configs.hostname}:${this.configs.port}`, "info",
+    this.log(
+      `Connected to ${this.configs.hostname}:${this.configs.port}`,
+      "info",
     );
 
     // Login
     const loginMessage = this.formatAMIMessage("Login", auth);
     await this.listener_conn!.write(loginMessage);
-    await this.action_conn!.write(loginMessage)
+    await this.action_conn!.write(loginMessage);
 
     return;
   }
@@ -95,11 +96,12 @@ export class DAMI {
   /**
    * Ping the ami
    */
-  public async ping (): Promise<boolean> {
-    const message = this.formatAMIMessage("ping", {})
-    const response = await this.to("ping", {ActionID: 123})
-    const pong = Array.isArray(response) && response.length === 1 && (response[0]["Response"] === "Success" || response[0]["Ping"] === "Pong")
-    return pong
+  public async ping(): Promise<boolean> {
+    const message = this.formatAMIMessage("ping", {});
+    const response = await this.to("ping", { ActionID: 123 });
+    const pong = Array.isArray(response) && response.length === 1 &&
+      (response[0]["Response"] === "Success" || response[0]["Ping"] === "Pong");
+    return pong;
   }
 
   /**
@@ -109,10 +111,16 @@ export class DAMI {
    * @param data - The data to send across, in key value pairs
    * @param [cb] - If passed in, will call the callback instead of returning the response
    */
-  public async to(actionName: string, data: DAMIData, cb?: (data: DAMIData[]) => void): Promise<[]|DAMIData[]> {
+  public async to(
+    actionName: string,
+    data: DAMIData,
+    cb?: (data: DAMIData[]) => void,
+  ): Promise<[] | DAMIData[]> {
     // data MUST have an ActionID
     if (!data["ActionID"]) {
-      throw new Error("Action `" + actionName + "` must have an `ActionID` set")
+      throw new Error(
+        "Action `" + actionName + "` must have an `ActionID` set",
+      );
     }
 
     // Logging purposes
@@ -134,112 +142,124 @@ export class DAMI {
       } catch (err) {
         // loop might already be finished
       }
-      }, 2000);
+    }, 2000);
 
     // Listen for all the events in the time given, and push  each response to an array
     let responses: DAMIData[] = [];
     try {
       for await (const chunk of Deno.iter(this.action_conn!)) {
-          // @ts-ignore because we do actually change the variable above, but the tsc is complaining true and false dont overlap
-          if (timeToWaitReached === true) {
-            break;
-          } else {
-            // Push the response to an array to collect it whilst time to wait hasn't been reached
-            if (chunk) {
-              let formattedResponse = this.formatAMIResponse(chunk);
+        // @ts-ignore because we do actually change the variable above, but the tsc is complaining true and false dont overlap
+        if (timeToWaitReached === true) {
+          break;
+        } else {
+          // Push the response to an array to collect it whilst time to wait hasn't been reached
+          if (chunk) {
+            let formattedResponse = this.formatAMIResponse(chunk);
 
-              // Push each 'event block'
-              if (Array.isArray(formattedResponse)) {
-                for (const response of formattedResponse) {
-                  responses.push(response);
-                }
-              } else if (Object.keys(formattedResponse).length) { // It's an object so just push that
-                responses.push(formattedResponse);
+            // Push each 'event block'
+            if (Array.isArray(formattedResponse)) {
+              for (const response of formattedResponse) {
+                responses.push(response);
               }
+            } else if (Object.keys(formattedResponse).length) { // It's an object so just push that
+              responses.push(formattedResponse);
+            }
 
-              // Check if error responses, only for logging purposes
-              if (Array.isArray(formattedResponse) && formattedResponse.length && formattedResponse[0]["Response"] === "Error"
+            // Check if error responses, only for logging purposes
+            if (
+              Array.isArray(formattedResponse) && formattedResponse.length &&
+              formattedResponse[0]["Response"] === "Error"
+            ) {
+              //@ts-ignore It  throws an error about the types, because we 'havent checked if its an array'... i mean ffs, we have but the tsc just hates us
+              const errorMessage = formattedResponse[0]["Message"]
+                ? // annoyingly not always present due to the event splitting
+                  formattedResponse[0]["Message"].toString()
+                : "An unknown error occurred when trying to authenticate";
+              this.log(errorMessage, "error");
+            } else if (
+              formattedResponse && !Array.isArray(formattedResponse) &&
+              formattedResponse["Response"]
+            ) {
+              if (
+                formattedResponse["Response"] &&
+                formattedResponse["Response"] === "Error"
               ) {
                 //@ts-ignore It  throws an error about the types, because we 'havent checked if its an array'... i mean ffs, we have but the tsc just hates us
-                const errorMessage = formattedResponse[0]["Message"] ? // annoyingly not always present due to the event splitting
-                    formattedResponse[0]["Message"].toString()
-                    :
-                    "An unknown error occurred when trying to authenticate";
+                const errorMessage = formattedResponse["Message"]
+                  ? // annoyingly not always present due to the event splitting
+                    formattedResponse["Message"].toString()
+                  : "An unknown error occurred when trying to authenticate";
                 this.log(errorMessage, "error");
-              } else if (formattedResponse && !Array.isArray(formattedResponse) && formattedResponse["Response"]
-              ) {
-                if (formattedResponse["Response"] && formattedResponse["Response"] === "Error"
-                ) {
-                  //@ts-ignore It  throws an error about the types, because we 'havent checked if its an array'... i mean ffs, we have but the tsc just hates us
-                  const errorMessage = formattedResponse["Message"] ? // annoyingly not always present due to the event splitting
-                      formattedResponse["Message"].toString()
-                      :
-                      "An unknown error occurred when trying to authenticate";
-                  this.log(errorMessage, "error");
-                }
               }
             }
           }
+        }
       }
     } catch (err) {
       this.log(
-          "Connection failed whilst receiving an event from the AMI. The connection may already be closed. Stopping.",
-          "error",
+        "Connection failed whilst receiving an event from the AMI. The connection may already be closed. Stopping.",
+        "error",
       );
       this.close();
-      return []
+      return [];
     }
 
     // OLD: Now get the responses where it matches the passed in ActionID
     // NEW: Now get the responses where it doesn't contain the auth event
-    relatedResponses = responses.filter(response => response["Message"] !== "Authentication accepted");
-    relatedResponses = relatedResponses.filter(response => response["Event"] !== "FullyBooted");
+    relatedResponses = responses.filter((response) =>
+      response["Message"] !== "Authentication accepted"
+    );
+    relatedResponses = relatedResponses.filter((response) =>
+      response["Event"] !== "FullyBooted"
+    );
 
     // As events can be separated at times (asterisk sends them in chunks), but still part of a single event, we combine objects before each other
-    const newResponses: DAMIData[] = [{}]
-    let onObjWithId = false
+    const newResponses: DAMIData[] = [{}];
+    let onObjWithId = false;
     relatedResponses.forEach((response, i) => {
-      onObjWithId = !!response["ActionID"]
+      onObjWithId = !!response["ActionID"];
       if (onObjWithId === false) {
-        Object.keys(response).forEach(key => {
-          newResponses[newResponses.length - 1][key] = response[key]
-        })
+        Object.keys(response).forEach((key) => {
+          newResponses[newResponses.length - 1][key] = response[key];
+        });
       } else if (onObjWithId === true && newResponses.length > 1) { // create new obj if
-        newResponses.push({})
-        Object.keys(response).forEach(key => {
-          newResponses[newResponses.length - 1][key] = response[key]
-        })
-      } else if (onObjWithId && newResponses.length ===  1) {  // for when the first object in relatedresponses has an id, but we haven't yet added to newresponses (dont create a new item in the  array yet)
+        newResponses.push({});
+        Object.keys(response).forEach((key) => {
+          newResponses[newResponses.length - 1][key] = response[key];
+        });
+      } else if (onObjWithId && newResponses.length === 1) { // for when the first object in relatedresponses has an id, but we haven't yet added to newresponses (dont create a new item in the  array yet)
         if (newResponses[newResponses.length - 1]["ActionID"]) { // Because say the item we are on has id, and prev has id, but the currennt length  of newresponses is 1, we need to create a new obj for this
-          newResponses.push({})
+          newResponses.push({});
         }
-        Object.keys(response).forEach(key => {
-          newResponses[newResponses.length - 1][key] = response[key]
-        })
+        Object.keys(response).forEach((key) => {
+          newResponses[newResponses.length - 1][key] = response[key];
+        });
       }
     });
-    relatedResponses = newResponses
+    relatedResponses = newResponses;
 
     // If the action ID is only present on one object, then the WHOLE array is a single response (event), so combine it like so
-    const onlyOneActionIdPresent = relatedResponses.filter(response => !!response["ActionID"]).length === 1;
+    const onlyOneActionIdPresent =
+      relatedResponses.filter((response) => !!response["ActionID"]).length ===
+        1;
     if (onlyOneActionIdPresent) {
-      const newResponse: DAMIData[] = [{}]
-      relatedResponses.forEach(response => {
-        Object.keys(response).forEach(key => {
-          newResponse[0][key] = response[key]
-        })
-      })
-      relatedResponses = newResponse
+      const newResponse: DAMIData[] = [{}];
+      relatedResponses.forEach((response) => {
+        Object.keys(response).forEach((key) => {
+          newResponse[0][key] = response[key];
+        });
+      });
+      relatedResponses = newResponse;
     }
 
     // Return the responses or call the callback
     if (cb) { // call callback
       await cb(relatedResponses);
-      return []
+      return [];
     } else if (!cb) { // return response instead
-      return relatedResponses
+      return relatedResponses;
     }
-    return []
+    return [];
   }
 
   /**
