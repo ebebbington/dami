@@ -112,6 +112,7 @@ const myPbx = {
   hostname: "127.0.0.1", // IP of your pbx, or container name if using docker, eg "asterisk_pbx"
   port: 5058 // Port of your pbx,
   logger: true // defaults to true, enables logging from DAMI
+  // certFile: "./path/to/cert", // pass in to enable tls
 }
 const Dami = new DAMI(myPbx) // Create a new instance of DAMI
 
@@ -276,7 +277,9 @@ Create an instance of the DAMI class. This does not run any logic, but just sets
 const Dami = new DAMI({
   hostname: "127.0.0.1",
   port: 3000,
-  logger: false // disables the DAMI logger. Disabled by default
+  logger: false, // disables the DAMI logger. Disabled by default
+  certFile: "./path/to/certFile" // optional, passing this in will connect using tls
+})
 ```
 
 ### `DAMI.conn: Deno.conn`
