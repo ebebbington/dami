@@ -105,8 +105,8 @@ DAMI supports sending actions and receiving events, regardless of whether you tr
 ## QuickStart
 
 ```typescript
-import { DAMI, DAMIData } from "https://deno.land/x/dami@v2.0.0/mod.ts";
-import { DAMI, DAMIData } from "https://x.nest.land/dami@2.0.0/mod.ts";
+import { DAMI, DAMIData } from "https://deno.land/x/dami@v2.1.0/mod.ts";
+import { DAMI, DAMIData } from "https://x.nest.land/dami@2.1.0/mod.ts";
 
 const myPbx = {
   hostname: "127.0.0.1", // IP of your pbx, or container name if using docker, eg "asterisk_pbx"
