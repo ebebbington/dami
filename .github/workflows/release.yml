@@ -12,5 +12,5 @@ jobs:
       - run: |
           export PATH="/home/runner/.deno/bin:$PATH"
           eggs upgrade
-          eggs link --key ${{ secrets.NEST_LAND_KEY }}
+          eggs link ${{ secrets.NEST_LAND_KEY }}
           eggs publish
