@@ -6,7 +6,7 @@ interface IConfigs {
   hostname?: string;
   port: number;
   logger?: boolean;
-  certFile?: string
+  certFile?: string;
 }
 
 type LogLevels = "error" | "info" | "log";
@@ -79,25 +79,25 @@ export class DAMI {
     }
     // Connect
     if (this.configs.certFile) {
-      console.log(this.configs)
+      console.log(this.configs);
       this.listener_conn = await Deno.connectTls({
         hostname: this.configs.hostname,
         port: this.configs.port,
-        certFile: this.configs.certFile
-      })
+        certFile: this.configs.certFile,
+      });
       this.action_conn = await Deno.connectTls({
         hostname: this.configs.hostname,
         port: this.configs.port,
-        certFile: this.configs.certFile
-      })
+        certFile: this.configs.certFile,
+      });
     } else {
       this.listener_conn = await Deno.connect({
         hostname: this.configs.hostname,
-        port: this.configs.port
+        port: this.configs.port,
       });
       this.action_conn = await Deno.connect({
         hostname: this.configs.hostname,
-        port: this.configs.port
+        port: this.configs.port,
       });
     }
 
