@@ -1,15 +1,8 @@
+// deno-lint-ignore-file
+
 import { DAMI, Event } from "../../src/dami.ts";
 import { Rhum } from "../deps.ts";
 import { auth, ami } from "../utils.ts";
-
-function sleep(milliseconds: number) {
-  var start = new Date().getTime();
-  for (var i = 0; i < 1e7; i++) {
-    if ((new Date().getTime() - start) > milliseconds) {
-      break;
-    }
-  }
-}
 
 Deno.test({
   name: "Events that send output return it correctly",

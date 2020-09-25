@@ -277,6 +277,7 @@ export class DAMI {
       dataArr.indexOf("") !== (dataArr.length - 1); // last bit is mainly if data comes back like: `["...", "...", ""]`, where it has an empty index but isn't actually a new block
     if (startOfNewSection) { // the event has multiple sections, so we put it into an array instead
       const blocks: Array<Array<string>> = [];
+      // deno-lint-ignore no-inner-declarations
       function loop(arr: string[]): void {
         if (arr[0] === "") { // has an empty 0th index, eg a 1+n section so  remove it
           arr.splice(0, 1);
@@ -437,6 +438,7 @@ export class DAMI {
         }
         //events.splice(i, 0)
       } else { // an event that wasn't triggered with an action, but we have no listener
+        this.log("No listener found for event: " + events[i]["Event"], "info")
        }
     }
   }

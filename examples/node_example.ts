@@ -1,3 +1,4 @@
+// deno-lint-ignore-file
 const net = require("net");
 const socket = new net.Socket();
 // const n = require('nami')

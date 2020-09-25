@@ -1,5 +1,4 @@
-// TODO(edward) Use .to with and without a cb. this file replaces send_actions_test ad to_test
-
+// deno-lint-ignore-file
 import { DAMI } from "../../src/dami.ts";
 import { Rhum } from "../deps.ts";
 import { auth, ami } from "../utils.ts";
