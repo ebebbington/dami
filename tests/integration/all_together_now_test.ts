@@ -1,6 +1,6 @@
-import {DAMI} from "../../src/dami.ts";
-import {auth, ami} from "../utils.ts";
-import {Rhum} from "../deps.ts";
+import { DAMI } from "../../src/dami.ts";
+import { auth, ami } from "../utils.ts";
+import { Rhum } from "../deps.ts";
 
 const expectedSipConfResponse = [{
   ActionID: 4,
@@ -30,42 +30,44 @@ Deno.test({
   sanitizeOps: false,
   sanitizeResources: false,
   async fn(): Promise<void> {
-    const Dami = new DAMI(ami)
+    const Dami = new DAMI(ami);
     await Dami.connectAndLogin(auth);
-    let fullyBootedEvent: any = []
-    let peerEntryEvent: any = []
-    let SipChannelsEvent: any = []
-    let SipShowPeersEvent: any = []
-    let getConfigEvent: any = []
+    let fullyBootedEvent: any = [];
+    let peerEntryEvent: any = [];
+    let SipChannelsEvent: any = [];
+    let SipShowPeersEvent: any = [];
+    let getConfigEvent: any = [];
     Dami.on("FullyBooted", (data) => {
-      fullyBootedEvent = data
-    })
+      fullyBootedEvent = data;
+    });
     Dami.on("PeerEntry", (data) => {
-      peerEntryEvent = data
-    })
-    await Dami.listen()
+      peerEntryEvent = data;
+    });
+    await Dami.listen();
     await Dami.to("Command", {
       Command: "sip show channels",
     }, (data) => {
-      SipChannelsEvent = data
-    })
+      SipChannelsEvent = data;
+    });
     await Dami.to("Command", {
       Command: "sip show peers",
-      }, (data) => {
-      SipShowPeersEvent = data
-    })
-    await Dami.to("SIPPeers", {
-    })
+    }, (data) => {
+      SipShowPeersEvent = data;
+    });
+    await Dami.to("SIPPeers", {});
     await Dami.to("GetConfig", {
       Filename: "sip.conf",
     }, (data) => {
-      getConfigEvent = data
-    })
+      getConfigEvent = data;
+    });
     setTimeout(() => {
       Rhum.asserts.assertEquals(fullyBootedEvent[0]["Event"], "FullyBooted");
       Rhum.asserts.assertEquals(fullyBootedEvent[0]["Privilege"], "system,all");
       Rhum.asserts.assertEquals(fullyBootedEvent[0]["Status"], "Fully Booted");
-      Rhum.asserts.assertEquals(fullyBootedEvent[0]["Message"], "Authentication accepted");
+      Rhum.asserts.assertEquals(
+        fullyBootedEvent[0]["Message"],
+        "Authentication accepted",
+      );
       Rhum.asserts.assertEquals(peerEntryEvent[1].Event, "PeerEntry");
       Rhum.asserts.assertEquals(peerEntryEvent[1].Channeltype, "SIP");
       Rhum.asserts.assertEquals(peerEntryEvent[1].ObjectName, 6001);
@@ -98,20 +100,44 @@ Deno.test({
       Rhum.asserts.assertEquals(peerEntryEvent[2].ACL, "no");
       Rhum.asserts.assertEquals(peerEntryEvent[2].Status, "Unmonitored");
       Rhum.asserts.assertEquals(peerEntryEvent[2].RealtimeDevice, "no");
-      Rhum.asserts.assertEquals(SipChannelsEvent[0]["ActionID"], 1)
-      Rhum.asserts.assertEquals(SipChannelsEvent[0]["Message"], "Command output follows")
-      Rhum.asserts.assertEquals(SipChannelsEvent[0]["Output"][0], "Peer             User/ANR         Call ID          Format           Hold     Last Message    Expiry     Peer      ")
-      Rhum.asserts.assertEquals(SipChannelsEvent[0]["Output"][1], "0 active SIP dialogs")
-      Rhum.asserts.assertEquals(SipChannelsEvent[0]["Response"], "Success")
-      Rhum.asserts.assertEquals(SipShowPeersEvent[0]["ActionID"], 2)
-      Rhum.asserts.assertEquals(SipShowPeersEvent[0]["Message"], "Command output follows")
-      Rhum.asserts.assertEquals(SipShowPeersEvent[0]["Output"][0], "Name/username             Host                                    Dyn Forcerport Comedia    ACL Port     Status      Description                      ")
-      Rhum.asserts.assertEquals(SipShowPeersEvent[0]["Output"][1], "6001                      (Unspecified)                            D  Auto (No)  No             0        Unmonitored                                  ")
-      Rhum.asserts.assertEquals(SipShowPeersEvent[0]["Output"][2], "6002/6002                 (Unspecified)                            D  Auto (Yes) No             0        Unmonitored                                  ")
-      Rhum.asserts.assertEquals(SipShowPeersEvent[0]["Output"][3], "2 sip peers [Monitored: 0 online, 0 offline Unmonitored: 0 online, 2 offline]")
-      Rhum.asserts.assertEquals(SipShowPeersEvent[0]["Response"], "Success")
-      Rhum.asserts.assertEquals(expectedSipConfResponse, getConfigEvent)
-      Dami.close()
-    }, 2000)
-  }
-})
+      Rhum.asserts.assertEquals(SipChannelsEvent[0]["ActionID"], 1);
+      Rhum.asserts.assertEquals(
+        SipChannelsEvent[0]["Message"],
+        "Command output follows",
+      );
+      Rhum.asserts.assertEquals(
+        SipChannelsEvent[0]["Output"][0],
+        "Peer             User/ANR         Call ID          Format           Hold     Last Message    Expiry     Peer      ",
+      );
+      Rhum.asserts.assertEquals(
+        SipChannelsEvent[0]["Output"][1],
+        "0 active SIP dialogs",
+      );
+      Rhum.asserts.assertEquals(SipChannelsEvent[0]["Response"], "Success");
+      Rhum.asserts.assertEquals(SipShowPeersEvent[0]["ActionID"], 2);
+      Rhum.asserts.assertEquals(
+        SipShowPeersEvent[0]["Message"],
+        "Command output follows",
+      );
+      Rhum.asserts.assertEquals(
+        SipShowPeersEvent[0]["Output"][0],
+        "Name/username             Host                                    Dyn Forcerport Comedia    ACL Port     Status      Description                      ",
+      );
+      Rhum.asserts.assertEquals(
+        SipShowPeersEvent[0]["Output"][1],
+        "6001                      (Unspecified)                            D  Auto (No)  No             0        Unmonitored                                  ",
+      );
+      Rhum.asserts.assertEquals(
+        SipShowPeersEvent[0]["Output"][2],
+        "6002/6002                 (Unspecified)                            D  Auto (Yes) No             0        Unmonitored                                  ",
+      );
+      Rhum.asserts.assertEquals(
+        SipShowPeersEvent[0]["Output"][3],
+        "2 sip peers [Monitored: 0 online, 0 offline Unmonitored: 0 online, 2 offline]",
+      );
+      Rhum.asserts.assertEquals(SipShowPeersEvent[0]["Response"], "Success");
+      Rhum.asserts.assertEquals(expectedSipConfResponse, getConfigEvent);
+      Dami.close();
+    }, 2000);
+  },
+});

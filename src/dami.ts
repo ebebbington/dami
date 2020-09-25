@@ -9,15 +9,15 @@ interface IConfigs {
   certFile?: string;
 }
 
-let nextActionId = 0
+let nextActionId = 0;
 
 let lastActionID = 0;
 
 type LogLevels = "error" | "info" | "log";
 
-export type Event = {[key: string]: string | number} & { Output?: string[]}
+export type Event = { [key: string]: string | number } & { Output?: string[] };
 
-export type Action = {[key: string]: string | number }
+export type Action = { [key: string]: string | number };
 
 const defaultConfigs = {
   hostname: "localhost",
@@ -53,7 +53,7 @@ export class DAMI {
    *     if (!listener) listener = responses.find(res => res.Event)["Event"]
    *     await listener(responses)
    */
-  private responses: Map<number, Event[]> = new Map()
+  private responses: Map<number, Event[]> = new Map();
 
   /**
    * @param configs - Hostname and port of the AMI to connect to
@@ -135,20 +135,19 @@ export class DAMI {
     data: Action,
     cb?: (data: Event[]) => void,
   ): Promise<void> {
-
     // Logging purposes
     this.log("Sending event for: " + actionName, "info");
     this.log(JSON.stringify(data), "info");
 
-    const id = this.generateActionId()
+    const id = this.generateActionId();
 
     // Save the callback
     if (cb) {
-      this.listeners.set(id, cb)
+      this.listeners.set(id, cb);
     }
 
     // Write message
-    data["ActionID"] = id
+    data["ActionID"] = id;
     const message = this.formatAMIMessage(actionName, data);
     await this.conn!.write(message);
   }
@@ -169,7 +168,7 @@ export class DAMI {
   public async listen(): Promise<void> {
     (async () => {
       try {
-        console.table(this.conn)
+        console.table(this.conn);
         for await (const chunk of Deno.iter(this.conn!)) {
           if (!chunk) {
             this.log(
@@ -180,13 +179,13 @@ export class DAMI {
             break;
           } else {
             this.log("Received event from the AMI", "info");
-            const event = new TextDecoder().decode(chunk)
+            const event = new TextDecoder().decode(chunk);
             await this.handleAMIResponse(event);
           }
         }
       } catch (e) {
-        console.error(e)
-        this.log(e.message, "error")
+        console.error(e);
+        this.log(e.message, "error");
         //await this.listen()
       }
     })();
@@ -307,17 +306,20 @@ export class DAMI {
       return responseArr;
     } else { //  It's a  single event block, so return an object
       const responseObject = formatArrayIntoObject(dataArr);
-      if (Object.keys(responseObject).length === 0) return []
+      if (Object.keys(responseObject).length === 0) return [];
       return [responseObject];
     }
   }
 
-  private generateActionId (): number {
-    nextActionId++
-    if (nextActionId === Number.MAX_SAFE_INTEGER || (nextActionId - 1) === Number.MAX_SAFE_INTEGER) {
-      nextActionId = 1
+  private generateActionId(): number {
+    nextActionId++;
+    if (
+      nextActionId === Number.MAX_SAFE_INTEGER ||
+      (nextActionId - 1) === Number.MAX_SAFE_INTEGER
+    ) {
+      nextActionId = 1;
     }
-    return nextActionId
+    return nextActionId;
   }
 
   /**
@@ -327,25 +329,27 @@ export class DAMI {
    *
    * @param actionID - Key in listners and responses
    */
-  private callListeners (actionID: number) {
+  private callListeners(actionID: number) {
     setTimeout(async () => {
-      const responses = this.responses.get(actionID)
-      let listener = this.listeners.get(actionID)
+      const responses = this.responses.get(actionID);
+      let listener = this.listeners.get(actionID);
       if (!listener) {
-        const event = responses!.find(response => response["Event"]);
-        const eventName = event!["Event"]
-        listener = this.listeners.get(eventName)
+        const event = responses!.find((response) => response["Event"]);
+        const eventName = event!["Event"];
+        listener = this.listeners.get(eventName);
       }
       if (listener && responses) { // bloody tsc complaining it might be undefined...
         // try find an event for logging purposes
-        const eventName = responses.find(response => response.hasOwnProperty("Event"));
+        const eventName = responses.find((response) =>
+          response.hasOwnProperty("Event")
+        );
         if (eventName) {
-          this.log("Calling listener for " + eventName, "info")
+          this.log("Calling listener for " + eventName, "info");
         }
-        await listener(responses)
+        await listener(responses);
         this.responses.delete(actionID);
       }
-    }, 1500)
+    }, 1500);
   }
 
   /**
@@ -357,12 +361,16 @@ export class DAMI {
     const events = this.formatAMIResponse(message);
 
     if (!events.length) {
-      return
+      return;
     }
 
     // Special case for when failed authentication
-    if (lastActionID === 0 && events[0]["Response"] === "Error" || events[0]["Response"] === "Error" && events[0]["Message"] === "Authentication failed") {
-      throw new Error(`Authentication failed. Unable to login.`)
+    if (
+      lastActionID === 0 && events[0]["Response"] === "Error" ||
+      events[0]["Response"] === "Error" &&
+        events[0]["Message"] === "Authentication failed"
+    ) {
+      throw new Error(`Authentication failed. Unable to login.`);
     }
 
     // And here is how we solve the scattered events the ami sends.
@@ -374,51 +382,62 @@ export class DAMI {
       if (!lastActionID && events[1] && events[1]["Event"] === "FullyBooted") { // first event, which is always auth event
         const ev = {
           ...events[0],
-          ...events[1]
-        }
+          ...events[1],
+        };
         const listener = this.listeners.get("FullyBooted");
         if (listener) {
-          await listener([ev])
+          await listener([ev]);
         }
-        events.splice(0, 2)
-        i = -1 // to start the loop from  0 now e've removed some elems
-      } else if (events[i]["ActionID"] && !this.responses.has(Number(events[i]["ActionID"]))) { // new section, an event asterisk sent back when triggered
-        this.responses.set(Number(events[i]["ActionID"]), [events[i]])
-        lastActionID = Number(events[i]["ActionID"])
-        const readyResponse = this.responses.get(lastActionID)
+        events.splice(0, 2);
+        i = -1; // to start the loop from  0 now e've removed some elems
+      } else if (
+        events[i]["ActionID"] &&
+        !this.responses.has(Number(events[i]["ActionID"]))
+      ) { // new section, an event asterisk sent back when triggered
+        this.responses.set(Number(events[i]["ActionID"]), [events[i]]);
+        lastActionID = Number(events[i]["ActionID"]);
+        const readyResponse = this.responses.get(lastActionID);
         if (readyResponse) {
           this.callListeners(Number(events[i]["ActionID"]));
         }
         //lastActionID = Number(events[i]["ActionID"])
         //this.responses.set(Number(events[i]["ActionID"]), [events[i]])
         //events.splice(i, 0)
-      } else if (events[i]["Event"] && !events[i]["ActionID"] && this.listeners.has(events[i]["Event"])) { // is an event asterisk is sending back without being triggered with an action
+      } else if (
+        events[i]["Event"] && !events[i]["ActionID"] &&
+        this.listeners.has(events[i]["Event"])
+      ) { // is an event asterisk is sending back without being triggered with an action
         // send event
         const listener = this.listeners.get(events[i]["Event"]);
         if (listener) {
-          await listener([events[i]])
+          await listener([events[i]]);
         }
         //events.splice(i, 1)
-      } else if (!events[i]["ActionID"] && !events[i]["Event"] && lastActionID) { // a continuation of a previous event but without an action id (eg getconfig action)
-        const e = this.responses.get(lastActionID)
+      } else if (
+        !events[i]["ActionID"] && !events[i]["Event"] && lastActionID
+      ) { // a continuation of a previous event but without an action id (eg getconfig action)
+        const e = this.responses.get(lastActionID);
         if (e) { // we know e exists because of the conditional, but tsc complains it might be undefined...
           //e.push(events[i])
           e[e.length - 1] = {
             ...e[e.length - 1],
-            ...events[i]
-          }
-          this.responses.set(lastActionID, e)
+            ...events[i],
+          };
+          this.responses.set(lastActionID, e);
         }
         //events.splice(i, 0)
-      } else if (events[i]["ActionID"] && this.responses.has(Number(events[i]["ActionID"]))) { // also a continuation, but with an action id on it (eg peer entry)
-        const e = this.responses.get(Number(events[i]["ActionID"]))
+      } else if (
+        events[i]["ActionID"] &&
+        this.responses.has(Number(events[i]["ActionID"]))
+      ) { // also a continuation, but with an action id on it (eg peer entry)
+        const e = this.responses.get(Number(events[i]["ActionID"]));
         if (e) { // we know e exists because of the conditional, but tsc complains it might be undefined...
-          e.push(events[i])
-          this.responses.set(Number(events[i]["ActionID"]), e)
+          e.push(events[i]);
+          this.responses.set(Number(events[i]["ActionID"]), e);
         }
         //events.splice(i, 0)
       } else { // an event that wasn't triggered with an action, but we have no listener
-      }
+       }
     }
   }
 

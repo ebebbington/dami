@@ -1,6 +1,6 @@
 import { Rhum, deferred } from "../deps.ts";
 import { DAMI } from "../../src/dami.ts";
-import {auth, ami} from "../utils.ts";
+import { auth, ami } from "../utils.ts";
 
 Rhum.testPlan("tests/unit/dami_test.ts", () => {
   Rhum.testSuite("close()", () => {

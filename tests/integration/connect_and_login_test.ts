@@ -1,4 +1,4 @@
-import {DAMI, Event} from "../../src/dami.ts";
+import { DAMI, Event } from "../../src/dami.ts";
 import { Rhum } from "../deps.ts";
 import { auth, ami } from "../utils.ts";
 
@@ -15,7 +15,7 @@ Deno.test({
       res = data;
     });
     await setTimeout(() => {
-      Rhum.asserts.assertEquals(res.length, 1)
+      Rhum.asserts.assertEquals(res.length, 1);
       Rhum.asserts.assertEquals(res[0]["Event"], "FullyBooted");
       Rhum.asserts.assertEquals(res[0]["Privilege"], "system,all");
       Rhum.asserts.assertEquals(res[0]["Status"], "Fully Booted");

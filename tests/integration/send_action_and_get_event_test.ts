@@ -35,13 +35,13 @@ Deno.test({
     const Dami = new DAMI(ami);
     await Dami.connectAndLogin(auth);
     await Dami.listen();
-    let cbResponse: any ;
+    let cbResponse: any;
     await Dami.to(
-        "GetConfig",
-        { Filename: "sip.conf", ActionID: 1234 },
-        (data) => {
-          cbResponse = data;
-        },
+      "GetConfig",
+      { Filename: "sip.conf", ActionID: 1234 },
+      (data) => {
+        cbResponse = data;
+      },
     );
     //returnResponse = await Dami.to("GetConfig", { Filename: "sip.conf", ActionID: 1234 })
     await setTimeout(() => {
@@ -62,24 +62,24 @@ Deno.test({
     await Dami.listen();
     let res: any;
     await Dami.to(
-        "GetConfig",
-        { Filename: "rtp.conf" },
-        (data) => {
-          res = data
-        }
+      "GetConfig",
+      { Filename: "rtp.conf" },
+      (data) => {
+        res = data;
+      },
     );
     setTimeout(() => {
       // It should contain EVERYTHING, even if asterisk sent multiple events
       Rhum.asserts.assertEquals(
-          res,
-          [{
-            Response: "Error",
-            "Message": "Config file has invalid format",
-            ActionID: 2,
-          }],
+        res,
+        [{
+          Response: "Error",
+          "Message": "Config file has invalid format",
+          ActionID: 2,
+        }],
       );
       Dami.close();
-    }, 2000)
+    }, 2000);
   },
 });
 
@@ -93,8 +93,8 @@ Deno.test({
     await Dami.listen();
     let peerEntryRes: Array<any> = [];
     Dami.on("PeerEntry", (data) => {
-      peerEntryRes = data
-    })
+      peerEntryRes = data;
+    });
     await Dami.to("SIPPeers", { ActionID: 12 });
     await setTimeout(() => {
       // And ensure things that trigger multiple events are correct
