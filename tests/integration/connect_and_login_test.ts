@@ -1,4 +1,4 @@
-import { DAMI, DAMIData } from "../../src/dami.ts";
+import {DAMI, Event} from "../../src/dami.ts";
 import { Rhum } from "../deps.ts";
 import { auth, ami } from "../utils.ts";
 
@@ -10,16 +10,17 @@ Deno.test({
     const Dami = new DAMI(ami);
     await Dami.connectAndLogin(auth);
     await Dami.listen();
-    let res: DAMIData = {};
+    let res: Event[] = [];
     Dami.on("FullyBooted", (data) => {
       res = data;
     });
     await setTimeout(() => {
-      Rhum.asserts.assertEquals(res["Event"], "FullyBooted");
-      Rhum.asserts.assertEquals(res["Privilege"], "system,all");
-      Rhum.asserts.assertEquals(res["Status"], "Fully Booted");
-      Rhum.asserts.assertEquals(res["Response"], "Success");
-      Rhum.asserts.assertEquals(res["Message"], "Authentication accepted");
+      Rhum.asserts.assertEquals(res.length, 1)
+      Rhum.asserts.assertEquals(res[0]["Event"], "FullyBooted");
+      Rhum.asserts.assertEquals(res[0]["Privilege"], "system,all");
+      Rhum.asserts.assertEquals(res[0]["Status"], "Fully Booted");
+      Rhum.asserts.assertEquals(res[0]["Response"], "Success");
+      Rhum.asserts.assertEquals(res[0]["Message"], "Authentication accepted");
       Dami.close();
     }, 1000);
   },

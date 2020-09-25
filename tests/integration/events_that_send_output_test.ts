@@ -1,16 +1,6 @@
-import { DAMI, DAMIData } from "../../src/dami.ts";
+import { DAMI, Event } from "../../src/dami.ts";
 import { Rhum } from "../deps.ts";
-
-const ami = {
-  hostname: "0.0.0.0",
-  port: 5038,
-  logger: false,
-};
-
-const auth = {
-  username: "admin",
-  secret: "mysecret",
-};
+import {auth, ami} from "../utils.ts";
 
 function sleep(milliseconds: number) {
   var start = new Date().getTime();
@@ -30,30 +20,35 @@ Deno.test({
     const Dami = new DAMI(ami);
     await Dami.connectAndLogin(auth);
     await Dami.listen();
-    const res: DAMIData[] = await Dami.to("Command", {
+    let res: any = []
+    await Dami.to("Command", {
       Command: "sip show peers",
       ActionID: 1,
+    }, (data) => {
+      res = data
     });
-    Rhum.asserts.assertEquals(
-      //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
-      res[0]["Output"][0],
-      "Name/username             Host                                    Dyn Forcerport Comedia    ACL Port     Status      Description                      ",
-    );
-    Rhum.asserts.assertEquals(
-      //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
-      res[0]["Output"][1],
-      "6001                      (Unspecified)                            D  Auto (No)  No             0        Unmonitored                                  ",
-    );
-    Rhum.asserts.assertEquals(
-      //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
-      res[0]["Output"][2],
-      "6002                      (Unspecified)                            D  Auto (No)  No             0        Unmonitored                                  ",
-    );
-    Rhum.asserts.assertEquals(
-      //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
-      res[0]["Output"][3],
-      "2 sip peers [Monitored: 0 online, 0 offline Unmonitored: 0 online, 2 offline]",
-    );
-    Dami.close();
+    await setTimeout(() => {
+      Rhum.asserts.assertEquals(
+          //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
+          res[0]["Output"][0],
+          "Name/username             Host                                    Dyn Forcerport Comedia    ACL Port     Status      Description                      ",
+      );
+      Rhum.asserts.assertEquals(
+          //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
+          res[0]["Output"][1],
+          "6001                      (Unspecified)                            D  Auto (No)  No             0        Unmonitored                                  ",
+      );
+      Rhum.asserts.assertEquals(
+          //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
+          res[0]["Output"][2],
+          "6002/6002                 (Unspecified)                            D  Auto (Yes) No             0        Unmonitored                                  ",
+      );
+      Rhum.asserts.assertEquals(
+          //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
+          res[0]["Output"][3],
+          "2 sip peers [Monitored: 0 online, 0 offline Unmonitored: 0 online, 2 offline]",
+      );
+      Dami.close();
+    }, 2000)
   },
 });
