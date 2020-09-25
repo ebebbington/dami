@@ -438,8 +438,8 @@ export class DAMI {
         }
         //events.splice(i, 0)
       } else { // an event that wasn't triggered with an action, but we have no listener
-        this.log("No listener found for event: " + events[i]["Event"], "info")
-       }
+        this.log("No listener found for event: " + events[i]["Event"], "info");
+      }
     }
   }
 
