@@ -94,7 +94,7 @@ Deno.test({
       Rhum.asserts.assertEquals(peerEntryEvent[2].IPport, 0);
       Rhum.asserts.assertEquals(peerEntryEvent[2].Dynamic, "yes");
       Rhum.asserts.assertEquals(peerEntryEvent[2].AutoForcerport, "yes");
-      Rhum.asserts.assertEquals(peerEntryEvent[2].Forcerport, "yes");
+      Rhum.asserts.assertEquals(peerEntryEvent[2].Forcerport, "no");
       Rhum.asserts.assertEquals(peerEntryEvent[2].AutoComedia, "no");
       Rhum.asserts.assertEquals(peerEntryEvent[2].Comedia, "no");
       Rhum.asserts.assertEquals(peerEntryEvent[2].VideoSupport, "no");
