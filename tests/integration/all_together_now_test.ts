@@ -131,7 +131,7 @@ Deno.test({
       );
       Rhum.asserts.assertEquals(
         SipShowPeersEvent[0]["Output"][2],
-        "6002/6002                 (Unspecified)                            D  Auto (Yes) No             0        Unmonitored                                  ",
+        "6002                      (Unspecified)                            D  Auto (No)  No             0        Unmonitored                                  ",
       );
       Rhum.asserts.assertEquals(
         SipShowPeersEvent[0]["Output"][3],
@@ -140,6 +140,6 @@ Deno.test({
       Rhum.asserts.assertEquals(SipShowPeersEvent[0]["Response"], "Success");
       Rhum.asserts.assertEquals(expectedSipConfResponse, getConfigEvent);
       Dami.close();
-    }, 2000);
+    }, 3000);
   },
 });
