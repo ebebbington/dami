@@ -34,7 +34,7 @@ Deno.test({
       Rhum.asserts.assertEquals(
         //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
         res[0]["Output"][2],
-        "6002/6002                 (Unspecified)                            D  Auto (Yes) No             0        Unmonitored                                  ",
+        "6002                      (Unspecified)                            D  Auto (No)  No             0        Unmonitored                                  ",
       );
       Rhum.asserts.assertEquals(
         //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
@@ -42,6 +42,6 @@ Deno.test({
         "2 sip peers [Monitored: 0 online, 0 offline Unmonitored: 0 online, 2 offline]",
       );
       Dami.close();
-    }, 2000);
+    }, 3000);
   },
 });

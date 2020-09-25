@@ -69,14 +69,8 @@ Deno.test({
     );
     setTimeout(() => {
       // It should contain EVERYTHING, even if asterisk sent multiple events
-      Rhum.asserts.assertEquals(
-        res,
-        [{
-          Response: "Error",
-          "Message": "Config file has invalid format",
-          ActionID: 2,
-        }],
-      );
+      Rhum.asserts.assertEquals(res[0]["Message"], "Config file has invalid format")
+      Rhum.asserts.assertEquals(res[0]["ActionID"], 2)
       Dami.close();
     }, 2000);
   },
@@ -128,7 +122,7 @@ Deno.test({
       Rhum.asserts.assertEquals(peerEntryRes[2].IPport, 0);
       Rhum.asserts.assertEquals(peerEntryRes[2].Dynamic, "yes");
       Rhum.asserts.assertEquals(peerEntryRes[2].AutoForcerport, "yes");
-      Rhum.asserts.assertEquals(peerEntryRes[2].Forcerport, "yes");
+      Rhum.asserts.assertEquals(peerEntryRes[2].Forcerport, "no");
       Rhum.asserts.assertEquals(peerEntryRes[2].AutoComedia, "no");
       Rhum.asserts.assertEquals(peerEntryRes[2].Comedia, "no");
       Rhum.asserts.assertEquals(peerEntryRes[2].VideoSupport, "no");
