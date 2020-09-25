@@ -218,7 +218,7 @@ export class DAMI {
    *
    * @returns A key value pair of all the data sent by the AMI
    */
-  private formatAMIResponse(message: string): Event[] {
+  private formatAMIResponse(message: string): Event[] { // TODO(edward) Improve the logic and make it more readable
     function formatArrayIntoObject(arr: string[]): Event {
       arr = arr.filter((data) => data !== ""); // strip empty lines
       let responseObject: Event = {};
