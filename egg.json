@@ -8,7 +8,14 @@
     "./README.md",
     "./src/*",
     "./dami-logo.png",
-    "./LICENSE"
+    "./LICENSE",
+    "./mod.ts"
   ],
-  "version": "3.0.0"
+  "version": "3.0.0",
+  "entry": "/mod.ts",
+  "ignore": [
+    ".git"
+  ],
+  "checkAll": false,
+  "unlisted": false
 }
