@@ -367,9 +367,8 @@ export class DAMI {
 
     // Special case for when failed authentication
     if (
-      lastActionID === 0 && events[0]["Response"] === "Error" ||
-      events[0]["Response"] === "Error" &&
-        events[0]["Message"] === "Authentication failed"
+        (events[0]["Response"] === "Error" &&
+        events[0]["Message"] === "Authentication failed") || events[0]["Message"] === "Authentication failed"
     ) {
       throw new Error(`Authentication failed. Unable to login.`);
     }
