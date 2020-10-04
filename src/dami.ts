@@ -208,7 +208,6 @@ export class DAMI {
       eventString += `${key}: ${data[key]}\r\n`;
     });
     eventString += `\r\n`;
-    console.log(eventString);
     return new TextEncoder().encode(eventString);
   }
 
