@@ -1,1 +1,1 @@
-export { DAMI, Action, Event } from "./src/dami.ts";
+export { Action, DAMI, Event } from "./src/dami.ts";

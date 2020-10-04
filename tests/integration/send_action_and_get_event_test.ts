@@ -1,7 +1,7 @@
 // deno-lint-ignore-file
 import { DAMI } from "../../src/dami.ts";
 import { Rhum } from "../deps.ts";
-import { auth, ami } from "../utils.ts";
+import { ami, auth } from "../utils.ts";
 
 const expectedSipConfResponse = [{
   ActionID: 1,

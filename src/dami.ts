@@ -208,6 +208,7 @@ export class DAMI {
       eventString += `${key}: ${data[key]}\r\n`;
     });
     eventString += `\r\n`;
+    console.log(eventString);
     return new TextEncoder().encode(eventString);
   }
 
@@ -337,11 +338,13 @@ export class DAMI {
       if (!listener) { // then get by event name
         const event = responses!.find((response) => response["Event"]);
         if (!event) { // eg no event name :/ can happen if we send originate without all props, ami CAN send back just an action id and message
-          const eventWithMessage = responses!.find(response => response["Message"])
+          const eventWithMessage = responses!.find((response) =>
+            response["Message"]
+          );
           if (eventWithMessage) {
-            throw new Error(eventWithMessage["Message"].toString())
+            throw new Error(eventWithMessage["Message"].toString());
           } else {
-            return
+            return;
           }
         }
         const eventName = event!["Event"];
@@ -375,15 +378,16 @@ export class DAMI {
 
     // Special case for when failed authentication
     if (
-        (events[0]["Response"] === "Error" &&
-        events[0]["Message"] === "Authentication failed") || events[0]["Message"] === "Authentication failed"
+      (events[0]["Response"] === "Error" &&
+        events[0]["Message"] === "Authentication failed") ||
+      events[0]["Message"] === "Authentication failed"
     ) {
       throw new Error(`Authentication failed. Unable to login.`);
     }
 
     // or for when errors occur
     if (events[0]["Response"] === "Error") {
-      throw new Error(events[0]["Message"].toString())
+      throw new Error(events[0]["Message"].toString());
     }
 
     // And here is how we solve the scattered events the ami sends.
