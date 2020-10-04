@@ -1,7 +1,7 @@
 // deno-lint-ignore-file
 import { DAMI } from "../../src/dami.ts";
 import { Rhum } from "../deps.ts";
-import { auth, ami } from "../utils.ts";
+import { ami, auth } from "../utils.ts";
 
 const expectedSipConfResponse = [{
   ActionID: 1,
@@ -70,10 +70,9 @@ Deno.test({
     setTimeout(() => {
       // It should contain EVERYTHING, even if asterisk sent multiple events
       Rhum.asserts.assertEquals(
-        res[0]["Message"],
-        "Config file has invalid format",
+        res,
+        undefined,
       );
-      Rhum.asserts.assertEquals(res[0]["ActionID"], 2);
       Dami.close();
     }, 2000);
   },

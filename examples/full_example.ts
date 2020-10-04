@@ -1,4 +1,4 @@
-import { DAMI } from "./src/dami.ts";
+import { DAMI } from "../src/dami.ts";
 
 const ami = {
   hostname: "0.0.0.0",

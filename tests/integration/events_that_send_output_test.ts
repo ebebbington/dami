@@ -2,7 +2,7 @@
 
 import { DAMI, Event } from "../../src/dami.ts";
 import { Rhum } from "../deps.ts";
-import { auth, ami } from "../utils.ts";
+import { ami, auth } from "../utils.ts";
 
 Deno.test({
   name: "Events that send output return it correctly",
