@@ -9,6 +9,7 @@
     "./src/*",
     "./dami-logo.png",
     "./LICENSE",
+    "./mod.ts",
     "./mod.ts"
   ],
   "version": "3.0.1",
