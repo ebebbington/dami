@@ -221,7 +221,7 @@ export class DAMI {
   private formatAMIResponse(message: string): Event[] { // TODO(edward) Improve the logic and make it more readable
     function formatArrayIntoObject(arr: string[]): Event {
       arr = arr.filter((data) => data !== ""); // strip empty lines
-      let responseObject: Event = {};
+      const responseObject: Event = {};
       // Create key value pairs from each line in the response
       arr.forEach((data) => { // data = "Something: something else"
         // If it has an "Output: ..." line, then there's a  chance there are multiple Output lines
