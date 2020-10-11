@@ -12,7 +12,7 @@ Rhum.testPlan("tests/unit/dami_test.ts", () => {
   });
   Rhum.testSuite("connectAndLogin()", () => {
     Rhum.testCase("Throws an error when `conn` is already set", async () => {
-      let expectedErr = {
+      const expectedErr = {
         msg: "",
         thrown: true,
       };
