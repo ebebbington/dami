@@ -32,8 +32,7 @@ Deno.test({
   sanitizeResources: false,
   async fn(): Promise<void> {
     const Dami = new DAMI(ami);
-    await Dami.connectAndLogin(auth);
-    await Dami.listen();
+    await Dami.connect(auth);
     let cbResponse: any;
     await Dami.to(
       "GetConfig",
@@ -57,8 +56,7 @@ Deno.test({
   sanitizeResources: false,
   async fn(): Promise<void> {
     const Dami = new DAMI(ami);
-    await Dami.connectAndLogin(auth);
-    await Dami.listen();
+    await Dami.connect(auth);
     let res: any;
     await Dami.to(
       "GetConfig",
@@ -84,8 +82,7 @@ Deno.test({
   sanitizeResources: false,
   async fn(): Promise<void> {
     const Dami = new DAMI(ami);
-    await Dami.connectAndLogin(auth);
-    await Dami.listen();
+    await Dami.connect(auth);
     let peerEntryRes: Array<any> = [];
     Dami.on("PeerEntry", (data) => {
       peerEntryRes = data;

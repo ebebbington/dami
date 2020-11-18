@@ -8,8 +8,7 @@ Deno.test({
   sanitizeResources: false,
   async fn(): Promise<void> {
     const Dami = new DAMI(ami);
-    await Dami.connectAndLogin(auth);
-    await Dami.listen();
+    await Dami.connect(auth);
     let res: Event[] = [];
     Dami.on("FullyBooted", (data) => {
       res = data;

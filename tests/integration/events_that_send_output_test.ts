@@ -11,8 +11,7 @@ Deno.test({
   async fn(): Promise<void> {
     // Can connect and login
     const Dami = new DAMI(ami);
-    await Dami.connectAndLogin(auth);
-    await Dami.listen();
+    await Dami.connect(auth);
     let res: any = [];
     await Dami.to("Command", {
       Command: "sip show peers",

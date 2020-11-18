@@ -33,7 +33,7 @@ Deno.test({
   sanitizeResources: false,
   async fn(): Promise<void> {
     const Dami = new DAMI(ami);
-    await Dami.connectAndLogin(auth);
+    await Dami.connect(auth);
     let fullyBootedEvent: any = [];
     let peerEntryEvent: any = [];
     let SipChannelsEvent: any = [];
@@ -45,7 +45,6 @@ Deno.test({
     Dami.on("PeerEntry", (data) => {
       peerEntryEvent = data;
     });
-    await Dami.listen();
     await Dami.to("Command", {
       Command: "sip show channels",
     }, (data) => {

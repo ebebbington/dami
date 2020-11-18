@@ -15,7 +15,6 @@
 
 ## Table of Contents
 - [What Is DAMI](#what-is-dami)
-- [How Does DAMI Work](#how-does-dami-work)
 - [Projects Using DAMI](#projects-using-dami)
 - [Quickstart](#quickstart)
 - [Examples](#examples)
@@ -96,7 +95,7 @@ import { DAMI, Action, Event } from "https://x.nest.land/dami@3.0.1/mod.ts";
 
 const myPbx = {
   hostname: "127.0.0.1", // IP of your pbx, or container name if using docker, eg "asterisk_pbx"
-  port: 5058 // Port of your pbx,
+  port: 5058, // Port of your pbx,
   logger: true // defaults to true, enables logging from DAMI
   // certFile: "./path/to/cert", // pass in to enable tls
 }
@@ -111,8 +110,7 @@ Dami.on("FullyBooted", (events: Event[]) => {
 })
 
 // Connect and start listening
-await Dami.connectAndLogin(myUser)
-await Dami.listen()
+await Dami.connect(myUser)
 
 // Send actions
 await Dami.to("Originate",  {

@@ -12,15 +12,14 @@ const auth = {
 };
 
 const Dami = new DAMI(ami);
-await Dami.connectAndLogin(auth);
 Dami.on("FullyBooted", (data) => {
   console.log("got fully booted");
   console.log(data);
 });
+await Dami.connect(auth);
 // Dami.on("PeerEntry", (data) => {
 //   console.log(data)
 // })
-await Dami.listen();
 
 // const val = await Dami.to("SIPPeers", {
 //   ActionID: "23"
