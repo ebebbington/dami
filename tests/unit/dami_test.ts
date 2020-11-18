@@ -37,28 +37,36 @@ Rhum.testPlan("tests/unit/dami_test.ts", () => {
     });
   });
   Rhum.testSuite("to()", () => {
-    Rhum.testCase("Sends an event", () => {
-      // const Dami = new DAMI(ami);
-      // await Dami.connectAndLogin(auth);
-      // await Dami.listen();
-      // await Dami.to("GetConfig", { ActionID: 12 });
-      // Dami.close();
+    Rhum.testCase("Sends an event", async () => {
+      const Dami = new DAMI(ami);
+      await Dami.connect(auth);
+      const promise = deferred()
+      let gotMsg = false
+      await Dami.to("GetConfig", { ActionID: 12 }, (data) => {
+        gotMsg = true
+        promise.resolve()
+      });
+      await promise;
+      Rhum.asserts.assertEquals(gotMsg, true)
+      Dami.close();
     });
   });
   Rhum.testSuite("on()", () => {
     // TODO(edward) Test case is leaking async ops
-    // Rhum.testCase(
-    //   "Registers a listener",
-    //   async () => {
-    //     let e: any;
-    //     const Dami = new DAMI(ami);
-    //     Dami.on("FullyBooted", (data) => {
-    //       e = data
-    //     });
-    //     await Dami.connectAndLogin(auth)
-    //     await Dami.listen()
-    //   },
-    // );
+    Rhum.testCase(
+      "Registers a listener",
+      async () => {
+        let e: any;
+        const Dami = new DAMI(ami);
+        const promise = deferred()
+        Dami.on("FullyBooted", (data) => {
+          promise.resolve()
+        })
+        await Dami.connect(auth);
+        await promise
+        Dami.close()
+      },
+    );
   });
 });
 
