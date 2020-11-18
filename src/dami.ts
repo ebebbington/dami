@@ -79,7 +79,7 @@ export class DAMI {
    *
    * @param auth - Username and secret to use in the login event
    */
-  public async connectAndLogin(
+  public async connect(
     auth: { username: string; secret: string },
   ): Promise<void> {
     if (this.conn) {
@@ -107,6 +107,9 @@ export class DAMI {
     // Login
     const loginMessage = this.formatAMIMessage("Login", auth);
     await this.conn!.write(loginMessage);
+
+    // Listen
+    await this.listen()
 
     return;
   }
@@ -165,10 +168,9 @@ export class DAMI {
   /**
    * Listens for any events from the AMI and does ?? with them
    */
-  public async listen(): Promise<void> {
+  private async listen(): Promise<void> {
     (async () => {
       try {
-        console.table(this.conn);
         for await (const chunk of Deno.iter(this.conn!)) {
           if (!chunk) {
             this.log(
@@ -184,7 +186,6 @@ export class DAMI {
           }
         }
       } catch (e) {
-        console.error(e);
         this.log(e.message, "error");
         //await this.listen()
       }
