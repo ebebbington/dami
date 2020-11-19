@@ -16,7 +16,8 @@ const Dami = new DAMI(ami);
 //   console.log("got fully booted");
 //   console.log(data);
 // });
-await Dami.connect(auth);
+const z = await Dami.connect(auth);
+console.log(z)
 // Dami.on("PeerEntry", (data) => {
 //   console.log(data)
 // })
@@ -31,12 +32,12 @@ await Dami.connect(auth);
 //   console.log("sip show channels got data");
 //   console.log(data);
 // });
-const a = await Dami.to("Command", {
-  Command: "sip show peers",
-  ActionID: 1235,
-})
-console.log('got cmd output:')
-console.log(a)
+// const a = await Dami.to("Command", {
+//   Command: "sip show peers",
+//   ActionID: 1235,
+// })
+// console.log('got cmd output:')
+// console.log(a)
 // }, (event) => {
 //   console.log('got command')
 //   console.log(event)
@@ -56,3 +57,18 @@ console.log(b)
 // });
 //console.log(val)
 //const val2 = await Dami.to("GetConfig", { Filename: "sip.conf", ActionID: 2 })
+
+    // [
+    //   {
+    //     Response: "Success",
+    //     Message: "Authentication accepted"
+    //   },
+    //   {
+    //       Event: "FullyBooted",
+    //       Privilege: "system,all",
+    //       Uptime: 39672,
+    //       LastReload: 39672,
+    //       Status: "Fully Booted"
+    //     }
+    // ]
+
