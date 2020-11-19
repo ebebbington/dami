@@ -11,6 +11,7 @@ version-resolver:
   patch:
     labels:
       - 'patch'
+      - 'chore'
   default: patch
 template: |
   __Compatibility__
