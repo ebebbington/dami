@@ -109,7 +109,7 @@ export class DAMI {
     await this.conn!.write(loginMessage);
 
     // Listen
-    await this.listen()
+    await this.listen();
 
     return;
   }
