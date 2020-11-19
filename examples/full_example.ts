@@ -31,24 +31,22 @@ await Dami.connect(auth);
 //   console.log("sip show channels got data");
 //   console.log(data);
 // });
-// await Dami.to("Command", {
-//   Command: "sip show peers",
-//   ActionID: 1235,
-// }, (data) => {
-//   console.log("command  got data");
-//   console.log(data);
-// });
+const a = await Dami.to("Command", {
+  Command: "sip show peers",
+  ActionID: 1235,
+})
+console.log('got cmd output:')
+console.log(a)
 // }, (event) => {
 //   console.log('got command')
 //   console.log(event)
 // })
 //
-// await Dami.to("SIPPeers", {
-//   ActionID: 189,
-// }, (data) => {
-//   console.log("sippeers got data");
-//   console.log(data);
-// });
+const b = await Dami.to("SIPPeers", {
+  ActionID: 189,
+})
+console.log('got peers output:')
+console.log(b)
 // await Dami.to("GetConfig", {
 //   Filename: "sip.conf",
 //   ActionID: 2345,

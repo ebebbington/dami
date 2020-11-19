@@ -17,14 +17,15 @@
 - [What Is DAMI](#what-is-dami)
 - [Projects Using DAMI](#projects-using-dami)
 - [Quickstart](#quickstart)
-- [Examples](#examples)
 - [Documentation](#documentation)
 
 ## What Is DAMI
 
-DAMI (Deno Asterisk Manager Interface) is an AMI client for Deno. It acts as an AMI client, and connects to your AMI on your Asterisk PBX. You can send any type of actions to the AMI (through the [AMI API](https://www.voip-info.org/asterisk-manager-api/), as well as listen on the events your AMI sends. It is up to you on how you handle events, for example, to send a WebSocket message to a client when a call hangs up. See below on how this all works.
+DAMI (Deno Asterisk Manager Interface) is an AMI client for Deno, to interact with the AMI on your Asterisk PBX.
 
-The data DAMI will return to you is exactly what Asterisk would, but objects consisting of key/value pairs inan array.
+DAMI supports sending every action outlined in the [AMI API](https://www.voip-info.org/asterisk-manager-api/.
+
+The data DAMI will return to you is exactly what Asterisk would, but objects consisting of key/value pairs in an array.
 
 For example, take the `Originate` action. From Asterisks' documentation, they outline it requires the following data:
 
@@ -55,7 +56,7 @@ await Dami.to("Originate", {
 })
 ```
 
-And the `FullyBooted` event will return:
+Take the `FullyBooted` event, this is how Asterisk outlines:
 
 ```typescript
 [{
@@ -91,6 +92,7 @@ Status: OK (5 ms)
 
 ```typescript
 import { DAMI, Action, Event } from "https://deno.land/x/dami@v3.0.1/mod.ts";
+// or
 import { DAMI, Action, Event } from "https://x.nest.land/dami@3.0.1/mod.ts";
 
 const myPbx = {
@@ -105,12 +107,13 @@ const Dami = new DAMI(myPbx)
 Dami.on("Hangup", (events: Event[]) => {
  // ...
 })
-Dami.on("FullyBooted", (events: Event[]) => {
-
-})
 
 // Connect and start listening
-await Dami.connect(myUser)
+const myUser = {
+  username: "user",
+  secret: "mysecret"
+}
+const result = await Dami.connect(myUser) // If authentication doesn't match, an error will be thrown here
 
 // Send actions
 await Dami.to("Originate",  {

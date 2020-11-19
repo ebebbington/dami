@@ -17,6 +17,7 @@ jobs:
 
       - name: Update Dependencies
         run: |
+          deno run --allow-all https://deno.land/x/dmm/mod.ts update
           cd tests
           deno run --allow-all https://deno.land/x/dmm/mod.ts update
 
