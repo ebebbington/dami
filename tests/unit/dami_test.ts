@@ -40,14 +40,14 @@ Rhum.testPlan("tests/unit/dami_test.ts", () => {
     Rhum.testCase("Sends an event", async () => {
       const Dami = new DAMI(ami);
       await Dami.connect(auth);
-      const promise = deferred()
-      let gotMsg = false
+      const promise = deferred();
+      let gotMsg = false;
       await Dami.to("GetConfig", { ActionID: 12 }, (data) => {
-        gotMsg = true
-        promise.resolve()
+        gotMsg = true;
+        promise.resolve();
       });
       await promise;
-      Rhum.asserts.assertEquals(gotMsg, true)
+      Rhum.asserts.assertEquals(gotMsg, true);
       Dami.close();
     });
   });
@@ -57,13 +57,13 @@ Rhum.testPlan("tests/unit/dami_test.ts", () => {
       "Registers a listener",
       async () => {
         const Dami = new DAMI(ami);
-        const promise = deferred()
+        const promise = deferred();
         Dami.on("FullyBooted", (data) => {
-          promise.resolve()
-        })
+          promise.resolve();
+        });
         await Dami.connect(auth);
-        await promise
-        Dami.close()
+        await promise;
+        Dami.close();
       },
     );
   });

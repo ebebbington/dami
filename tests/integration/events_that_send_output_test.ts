@@ -1,7 +1,7 @@
 // deno-lint-ignore-file
 
 import { DAMI, Event } from "../../src/dami.ts";
-import {deferred, Rhum} from "../deps.ts";
+import { deferred, Rhum } from "../deps.ts";
 import { ami, auth } from "../utils.ts";
 
 Deno.test({
@@ -13,15 +13,15 @@ Deno.test({
     const Dami = new DAMI(ami);
     await Dami.connect(auth);
     let res: any = [];
-    const promise = deferred()
+    const promise = deferred();
     await Dami.to("Command", {
       Command: "sip show peers",
       ActionID: 1,
     }, (data) => {
       res = data;
-      promise.resolve()
+      promise.resolve();
     });
-    await promise
+    await promise;
     Rhum.asserts.assertEquals(
       //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
       res[0]["Output"][0],
@@ -42,6 +42,6 @@ Deno.test({
       res[0]["Output"][3],
       "2 sip peers [Monitored: 0 online, 0 offline Unmonitored: 0 online, 2 offline]",
     );
-      Dami.close()
+    Dami.close();
   },
 });
