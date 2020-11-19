@@ -56,7 +56,6 @@ Rhum.testPlan("tests/unit/dami_test.ts", () => {
     Rhum.testCase(
       "Registers a listener",
       async () => {
-        let e: any;
         const Dami = new DAMI(ami);
         const promise = deferred()
         Dami.on("FullyBooted", (data) => {
