@@ -70,8 +70,8 @@ Rhum.testPlan("tests/integration/dami_test.ts", () => {
         Object.keys(res[1]).length,
         Object.keys(res[2]).length,
       ];
-      Rhum.asserts.assertEquals(numberOfProps1, 17);
-      Rhum.asserts.assertEquals(numberOfProps2, 17);
+      Rhum.asserts.assertEquals(numberOfProps1, 19);
+      Rhum.asserts.assertEquals(numberOfProps2, 19);
       Rhum.asserts.assertEquals(res[1].Event, "PeerEntry");
       Rhum.asserts.assertEquals(res[1].Channeltype, "SIP");
       Rhum.asserts.assertEquals(res[1].ObjectName, 6001);
