@@ -4,19 +4,22 @@
   "repository": "https://github.com/ebebbington/dami",
   "stable": true,
   "files": [
-    "./mod.ts",
     "./README.md",
     "./src/*",
     "./dami-logo.png",
     "./LICENSE",
     "./mod.ts",
-    "./mod.ts"
+    "./deps.ts"
   ],
   "version": "4.0.0",
-  "entry": "/mod.ts",
+  "entry": "./mod.ts",
   "ignore": [
     ".git"
   ],
+  "checkTest": false,
   "checkAll": false,
-  "unlisted": false
+  "unlisted": false,
+  "checkTests": false,
+  "check": true,
+  "homepage": "https://github.com/ebebbington/dami"
 }
