@@ -26,8 +26,6 @@ interface IConfigs {
 
 let nextActionId = 0;
 
-let lastActionID = 0;
-
 type LogLevels = "error" | "info" | "log";
 
 export type Event = { [key: string]: string | number } & { Output?: string[] };
