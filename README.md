@@ -91,9 +91,9 @@ DAMI would return it like:
 ## QuickStart
 
 ```typescript
-import { DAMI, Action, Event } from "https://deno.land/x/dami@v3.0.1/mod.ts";
+import { DAMI, Action, Event } from "https://deno.land/x/dami@v4.0.0/mod.ts";
 // or
-import { DAMI, Action, Event } from "https://x.nest.land/dami@3.0.1/mod.ts";
+import { DAMI, Action, Event } from "https://x.nest.land/dami@4.0.0/mod.ts";
 
 const myPbx = {
   hostname: "127.0.0.1", // IP of your pbx, or container name if using docker, eg "asterisk_pbx"
