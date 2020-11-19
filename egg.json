@@ -12,7 +12,7 @@
     "./mod.ts",
     "./mod.ts"
   ],
-  "version": "3.0.1",
+  "version": "4.0.0",
   "entry": "/mod.ts",
   "ignore": [
     ".git"
