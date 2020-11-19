@@ -1,6 +1,6 @@
-import {Rhum} from "../deps.ts";
-import {DAMI} from "../../src/dami.ts";
-import {ami, auth} from "../utils.ts";
+import { Rhum } from "../deps.ts";
+import { DAMI } from "../../src/dami.ts";
+import { ami, auth } from "../utils.ts";
 
 const expectedSipConfResponse = [{
   ActionID: 4,
@@ -27,41 +27,44 @@ const expectedSipConfResponse = [{
 
 Rhum.testPlan("tests/integration/dami_test.ts", () => {
   Rhum.testSuite("Events with Output", () => {
-    Rhum.testCase("An event with output returns the data correctly", async () => {
-      const Dami = new DAMI(ami);
-      await Dami.connect(auth);
-      const res = await Dami.to("Command", {
-        Command: "sip show peers",
-      });
-      Rhum.asserts.assertEquals(
+    Rhum.testCase(
+      "An event with output returns the data correctly",
+      async () => {
+        const Dami = new DAMI(ami);
+        await Dami.connect(auth);
+        const res = await Dami.to("Command", {
+          Command: "sip show peers",
+        });
+        Rhum.asserts.assertEquals(
           //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
           res[0]["Output"][0],
           "Name/username             Host                                    Dyn Forcerport Comedia    ACL Port     Status      Description                      ",
-      );
-      Rhum.asserts.assertEquals(
+        );
+        Rhum.asserts.assertEquals(
           //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
           res[0]["Output"][1],
           "6001                      (Unspecified)                            D  Auto (No)  No             0        Unmonitored                                  ",
-      );
-      Rhum.asserts.assertEquals(
+        );
+        Rhum.asserts.assertEquals(
           //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
           res[0]["Output"][2],
           "6002                      (Unspecified)                            D  Auto (No)  No             0        Unmonitored                                  ",
-      );
-      Rhum.asserts.assertEquals(
+        );
+        Rhum.asserts.assertEquals(
           //@ts-ignore tsc is throwin errors about the types, but if it fails then the code is wrong anyways
           res[0]["Output"][3],
           "2 sip peers [Monitored: 0 online, 0 offline Unmonitored: 0 online, 2 offline]",
-      );
-      Dami.close();
-    })
-  })
+        );
+        Dami.close();
+      },
+    );
+  });
   Rhum.testSuite("Sending Actions To Return Events Works", () => {
     Rhum.testCase("SIPPeers Action -> PeerEntry Event", async () => {
       const Dami = new DAMI(ami);
       await Dami.connect(auth);
       const res = await Dami.to("SIPPeers", {});
-      Dami.close()
+      Dami.close();
       Rhum.asserts.assertEquals(res.length, 4);
       const [numberOfProps1, numberOfProps2] = [
         Object.keys(res[1]).length,
@@ -101,35 +104,38 @@ Rhum.testPlan("tests/integration/dami_test.ts", () => {
       Rhum.asserts.assertEquals(res[2].ACL, "no");
       Rhum.asserts.assertEquals(res[2].Status, "Unmonitored");
       Rhum.asserts.assertEquals(res[2].RealtimeDevice, "no");
-    })
+    });
     Rhum.testCase("Command Action", async () => {
-      const Dami = new DAMI(ami)
-      await Dami.connect(auth)
+      const Dami = new DAMI(ami);
+      await Dami.connect(auth);
       const res = await Dami.to("Command", {
         Command: "sip show channels",
-      })
-      Dami.close()
+      });
+      Dami.close();
       Rhum.asserts.assertEquals(res[0]["ActionID"], 3);
       Rhum.asserts.assertEquals(
-          res[0]["Message"],
-          "Command output follows",
+        res[0]["Message"],
+        "Command output follows",
       );
       Rhum.asserts.assertEquals(
-          res[0]["Output"]![0],
-          "Peer             User/ANR         Call ID          Format           Hold     Last Message    Expiry     Peer      ",
+        res[0]["Output"]![0],
+        "Peer             User/ANR         Call ID          Format           Hold     Last Message    Expiry     Peer      ",
       );
       Rhum.asserts.assertEquals(
-          res[0]["Output"]![1],
-          "0 active SIP dialogs",
+        res[0]["Output"]![1],
+        "0 active SIP dialogs",
       );
       Rhum.asserts.assertEquals(res[0]["Response"], "Success");
-    })
-  })
+    });
+  });
   Rhum.testSuite("Sending Doesn't Block Listener", () => {
-    Rhum.testCase("Sending an event shouldn't block the listener from sending back events that aren't triggered by actions", () => {
-      Rhum.asserts.assert(true)
-    })
-  })
-})
+    Rhum.testCase(
+      "Sending an event shouldn't block the listener from sending back events that aren't triggered by actions",
+      () => {
+        Rhum.asserts.assert(true);
+      },
+    );
+  });
+});
 
-Rhum.run()
+Rhum.run();

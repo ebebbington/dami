@@ -2,20 +2,20 @@
  * Hostname of the server to connect to
  * Port of the server to connect to
  */
-import {readStringDelim} from "../deps.ts";
+import { readStringDelim } from "../deps.ts";
 
 type SuccessAuthEvent = {
-  Response: "Success",
-  Message: "Authentication accepted"
-}
+  Response: "Success";
+  Message: "Authentication accepted";
+};
 
 type FullyBootedEvent = {
-  Event: "FullyBooted",
-  Privilege: string, // eg "system,all"
-  Update: number,
-  LastReload: number,
-  Status: "Fully Booted"
-}
+  Event: "FullyBooted";
+  Privilege: string; // eg "system,all"
+  Update: number;
+  LastReload: number;
+  Status: "Fully Booted";
+};
 
 interface IConfigs {
   hostname?: string;
@@ -58,7 +58,8 @@ export class DAMI {
    *
    * Specifically for on listeners
    */
-  private on_listeners: Map<number | string, (event: Event) => void> = new Map();
+  private on_listeners: Map<number | string, (event: Event) => void> =
+    new Map();
 
   /**
    * @param configs - Hostname and port of the AMI to connect to
@@ -106,11 +107,11 @@ export class DAMI {
 
     // Get the connect message out of the way
     for await (const message of readStringDelim(this.conn, "\r\n")) {
-      break
+      break;
     }
     this.log(
-        `Connected to ${this.configs.hostname}:${this.configs.port}`,
-        "info",
+      `Connected to ${this.configs.hostname}:${this.configs.port}`,
+      "info",
     );
 
     // Login
@@ -118,25 +119,27 @@ export class DAMI {
     await this.conn!.write(loginMessage);
 
     // Get the login events out the way
-    const loginEvents: Event[] = []
+    const loginEvents: Event[] = [];
     for await (const message of readStringDelim(this.conn, "\r\n\r\n")) {
-      const result = this.formatAMIResponse(message)
-      loginEvents.push(result)
-      if (loginEvents.length ===  2) {
-        break
+      const result = this.formatAMIResponse(message);
+      loginEvents.push(result);
+      if (loginEvents.length === 2) {
+        break;
       }
     }
     if (loginEvents[0]["Message"] === "Authentication failed") {
-      this.close()
-      throw new Error(`Authentication failed. Unable to login. Check your username and password are correct.`);
+      this.close();
+      throw new Error(
+        `Authentication failed. Unable to login. Check your username and password are correct.`,
+      );
     }
 
     // Listen
     await this.listen();
 
     // Return the auth/login events data
-    const authEvent = loginEvents[0] as SuccessAuthEvent
-    const fullyBootedEvent = loginEvents[1] as FullyBootedEvent
+    const authEvent = loginEvents[0] as SuccessAuthEvent;
+    const fullyBootedEvent = loginEvents[1] as FullyBootedEvent;
     return [authEvent, fullyBootedEvent];
   }
 
@@ -147,10 +150,10 @@ export class DAMI {
    */
   public async ping(): Promise<boolean> {
     const res = await this.to("ping", {});
-    if (res[0]['Ping'] === "Pong" && res[0]['Response'] === "Success") {
-      return true
+    if (res[0]["Ping"] === "Pong" && res[0]["Response"] === "Success") {
+      return true;
     }
-    return false
+    return false;
   }
 
   /**
@@ -173,33 +176,41 @@ export class DAMI {
     const message = this.formatAMIMessage(actionName, data);
     await this.conn!.write(message);
 
-    const results = []
+    const results = [];
     for await (const message of readStringDelim(this.conn!, "\r\n\r\n")) {
-      const result = this.formatAMIResponse(message)
+      const result = this.formatAMIResponse(message);
 
       // for when errors occur
       if (result["Response"] === "Error") {
-        throw new Error(result["Message"] ? result["Message"].toString() : "Unknown error. " + JSON.stringify(result));
+        throw new Error(
+          result["Message"]
+            ? result["Message"].toString()
+            : "Unknown error. " + JSON.stringify(result),
+        );
       }
 
       // save the result
-      results.push(result)
+      results.push(result);
 
       // When a list is being sent, check so we know when to break
-      if (results.length && results[0]["EventList"] && results[0]["EventList"] === "start" && result["EventList"] && result["EventList"] === "Complete") {
-        break
+      if (
+        results.length && results[0]["EventList"] &&
+        results[0]["EventList"] === "start" && result["EventList"] &&
+        result["EventList"] === "Complete"
+      ) {
+        break;
       }
 
       // When it's just a single event, but make sure we don't break if a list IS being sent...
       if (!results[0]["EventList"] && !result["EventList"]) {
-        break
+        break;
       }
     }
 
     // Because the above loop breaks our listen, reinitiate it
-    await this.listen()
+    await this.listen();
 
-    return results
+    return results;
   }
 
   /**
@@ -275,12 +286,14 @@ export class DAMI {
       // If it has an "Output: ..." line, then there's a chance there are multiple Output lines
       // command response
       if (data.indexOf("Output: ") === 0) { // we do this because there are multiple "Output: " items returned (eg multiple items in the array), so when we do  `responseObj[key] = value`, it just overwrites the data
-          // For example, data might come across as:
-          // ["Output: Name/username         Host          Dyn",
-          // "Output: 6001                  (Unspecified)  D"]
+        // For example, data might come across as:
+        // ["Output: Name/username         Host          Dyn",
+        // "Output: 6001                  (Unspecified)  D"]
         const dataSplit = data.split(/: (.+)/); // only split first occurrence, as we can have data that is like: "Output: 2 sip peers [Monitored: ..."
         if (responseObject["Output"]) { // We have already added the output property
-          if (typeof responseObject["Output"] !== "number" && typeof responseObject["Output"] !== "string"
+          if (
+            typeof responseObject["Output"] !== "number" &&
+            typeof responseObject["Output"] !== "string"
           ) { // append
             responseObject["Output"].push(dataSplit[1]);
           }
@@ -288,7 +301,7 @@ export class DAMI {
           responseObject["Output"] = [];
           responseObject["Output"].push(dataSplit[1]);
         }
-        return
+        return;
       }
       // event response
       const [name, value] = data.split(": ");
@@ -323,7 +336,9 @@ export class DAMI {
 
     // If it has an action id, then it's not for us. Probably an edge case as we shouldn't be handling those.
     if (event["ActionID"]) {
-      throw new Error("Unknown error, this is most likely a bug. Report an issue describing how you got to this stage")
+      throw new Error(
+        "Unknown error, this is most likely a bug. Report an issue describing how you got to this stage",
+      );
     }
 
     // or for when errors occur. Not sure if this would ever happen
@@ -334,12 +349,14 @@ export class DAMI {
     // Get the listener and call it
     const listener = this.on_listeners.get(event["Event"]);
     if (listener) {
-      this.log("Found listener for " + event['Event'] + " event", "info")
-      await listener(event)
+      this.log("Found listener for " + event["Event"] + " event", "info");
+      await listener(event);
     } else {
-      this.log("No listener was found for " + event['Event'] + " event", "info")
+      this.log(
+        "No listener was found for " + event["Event"] + " event",
+        "info",
+      );
     }
-
   }
 
   /**
