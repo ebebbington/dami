@@ -22,7 +22,7 @@ jobs:
           deno run --allow-all https://deno.land/x/dmm/mod.ts update
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v2
+        uses: peter-evans/create-pull-request@v3
         with:
           token: ${{ secrets.CI_USER_PAT }}
           commit-message: "chore: Update dependencies"
