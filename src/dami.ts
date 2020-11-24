@@ -206,7 +206,7 @@ export class DAMI {
     }
 
     // Because the above loop breaks our listen, reinitiate it
-    await this.listen();
+    this.listen();
 
     return results;
   }
@@ -224,7 +224,7 @@ export class DAMI {
   /**
    * Listens for any events from the AMI that it sends itself
    */
-  private async listen(): Promise<void> {
+  private listen(): Promise<void> {
     (async () => {
       try {
         for await (const chunk of Deno.iter(this.conn!)) {
