@@ -1,5 +1,5 @@
 import { Rhum } from "../deps.ts";
-import { DAMI } from "../../src/dami.ts";
+import { DAMI } from "../../mod.ts";
 import { ami, auth } from "../utils.ts";
 
 const expectedSipConfResponse = [{
