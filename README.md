@@ -124,7 +124,8 @@ await Dami.to("Originate",  {
 ### Ping
 
 ```typescript
-import { DAMI, Action, Event } from "https://deno.land/x/dami@v3.0.1/mod.ts";
+import { DAMI } from "https://deno.land/x/dami@v3.0.1/mod.ts";
+import type { Event, Action } from "https://deno.land/x/dami@v3.0.1/mod.ts";
 const ami = {
   hostname: "0.0.0.0",
   port: 5038
