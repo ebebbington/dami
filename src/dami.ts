@@ -224,7 +224,7 @@ export class DAMI {
   /**
    * Listens for any events from the AMI that it sends itself
    */
-  private listen(): Promise<void> {
+  private listen(): void {
     (async () => {
       try {
         for await (const chunk of Deno.iter(this.conn!)) {
