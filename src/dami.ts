@@ -2,7 +2,7 @@
  * Hostname of the server to connect to
  * Port of the server to connect to
  */
-import {Deferred, readStringDelim, deferred} from "../deps.ts";
+import { Deferred, deferred, readStringDelim } from "../deps.ts";
 
 type SuccessAuthEvent = {
   Response: "Success";
@@ -59,7 +59,7 @@ export class DAMI {
   private on_listeners: Map<number | string, (event: Event) => void> =
     new Map();
 
-  private ops: Record<number, Deferred<Event[]>> = {}
+  private ops: Record<number, Deferred<Event[]>> = {};
 
   /**
    * @param configs - Hostname and port of the AMI to connect to
@@ -172,14 +172,25 @@ export class DAMI {
     this.log(JSON.stringify(data), "info");
 
     // Construct data
-    const actionId = this.generateActionId()
+    const actionId = this.generateActionId();
     data["ActionID"] = actionId;
     const message = this.formatAMIMessage(actionName, data);
 
     // Write message and wait for response
-    this.ops[actionId] = deferred()
+    this.ops[actionId] = deferred();
     await this.conn!.write(message);
-    const results = await this.ops[actionId]
+    const results = await this.ops[actionId];
+
+    // for when errors occur
+    results.forEach((result) => {
+      if (result["Response"] && result["Response"] === "Error") {
+        throw new Error(
+          result["Message"]
+            ? result["Message"].toString()
+            : "Unknown error. " + JSON.stringify(result),
+        );
+      }
+    });
 
     // for await (const message of readStringDelim(this.conn!, "\r\n\r\n")) {
     //   const result = this.formatAMIResponse(message);
@@ -232,45 +243,28 @@ export class DAMI {
   private listen(): void {
     (async () => {
       try {
-        for await (const chunk of Deno.iter(this.conn!)) {
-          if (!chunk) {
-            this.log(
-              "Invalid response from event received from the AMI. Closing connection",
-              "error",
-            );
-            this.close();
-            break;
-          }
+        for await (const message of readStringDelim(this.conn!, "\r\n\r\n")) {
           this.log("Received event from the AMI", "info");
 
           // Format and construct the data
-          const eventStr = new TextDecoder().decode(chunk);
-          const eventArr = eventStr.split("\r\n\r\n").filter(event => event.trim() !== "")
-          const parsedEvents: Event[] = []
-          eventArr.forEach(event => {
-            parsedEvents.push(this.formatAMIResponse(event))
-          })
-
-          // for when errors occur
-          parsedEvents.forEach(result => {
-            if (result["Response"] && result["Response"] === "Error") {
-              throw new Error(
-                  result["Message"]
-                      ? result["Message"].toString()
-                      : "Unknown error. " + JSON.stringify(result),
-              );
-            }
-          })
+          const eventStr = message;
+          const eventArr = eventStr.split("\r\n\r\n").filter((event) =>
+            event.trim() !== ""
+          );
+          const parsedEvents: Event[] = [];
+          eventArr.forEach((event) => {
+            parsedEvents.push(this.formatAMIResponse(event));
+          });
 
           // Check if an op is waiting for this message
-          const eventWithActionId = parsedEvents.find(event => {
-            return !!event["ActionID"]
-          })
+          const eventWithActionId = parsedEvents.find((event) => {
+            return !!event["ActionID"];
+          });
           if (eventWithActionId && eventWithActionId["ActionID"]) {
-            const actionId =  eventWithActionId["ActionID"] as number
+            const actionId = eventWithActionId["ActionID"] as number;
             if (this.ops[actionId]) {
-              this.ops[actionId].resolve(parsedEvents)
-              delete this.ops[actionId]
+              this.ops[actionId].resolve(parsedEvents);
+              delete this.ops[actionId];
             }
           } else {
             await this.handleAMIResponse(eventStr);
