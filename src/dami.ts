@@ -2,7 +2,7 @@
  * Hostname of the server to connect to
  * Port of the server to connect to
  */
-import { readStringDelim } from "../deps.ts";
+import {Deferred, readStringDelim, deferred} from "../deps.ts";
 
 type SuccessAuthEvent = {
   Response: "Success";
@@ -58,6 +58,8 @@ export class DAMI {
    */
   private on_listeners: Map<number | string, (event: Event) => void> =
     new Map();
+
+  private ops: Record<number, Deferred<Event[]>> = {}
 
   /**
    * @param configs - Hostname and port of the AMI to connect to
@@ -169,44 +171,47 @@ export class DAMI {
     this.log("Sending event for: " + actionName, "info");
     this.log(JSON.stringify(data), "info");
 
-    // Write message
-    data["ActionID"] = this.generateActionId();
+    // Construct data
+    const actionId = this.generateActionId()
+    data["ActionID"] = actionId;
     const message = this.formatAMIMessage(actionName, data);
+
+    // Write message and wait for response
+    this.ops[actionId] = deferred()
     await this.conn!.write(message);
+    const results = await this.ops[actionId]
 
-    const results = [];
-    for await (const message of readStringDelim(this.conn!, "\r\n\r\n")) {
-      const result = this.formatAMIResponse(message);
-
-      // for when errors occur
-      if (result["Response"] === "Error") {
-        throw new Error(
-          result["Message"]
-            ? result["Message"].toString()
-            : "Unknown error. " + JSON.stringify(result),
-        );
-      }
-
-      // save the result
-      results.push(result);
-
-      // When a list is being sent, check so we know when to break
-      if (
-        results.length && results[0]["EventList"] &&
-        results[0]["EventList"] === "start" && result["EventList"] &&
-        result["EventList"] === "Complete"
-      ) {
-        break;
-      }
-
-      // When it's just a single event, but make sure we don't break if a list IS being sent...
-      if (!results[0]["EventList"] && !result["EventList"]) {
-        break;
-      }
-    }
-
-    // Because the above loop breaks our listen, reinitiate it
-    this.listen();
+    // for await (const message of readStringDelim(this.conn!, "\r\n\r\n")) {
+    //   const result = this.formatAMIResponse(message);
+    //   console.log('got message inside to:')
+    //   console.log(result)
+    //
+    //   // for when errors occur
+    //   if (result["Response"] === "Error") {
+    //     throw new Error(
+    //       result["Message"]
+    //         ? result["Message"].toString()
+    //         : "Unknown error. " + JSON.stringify(result),
+    //     );
+    //   }
+    //
+    //   // save the result
+    //   results.push(result);
+    //
+    //   // When a list is being sent, check so we know when to break
+    //   if (
+    //     results.length && results[0]["EventList"] &&
+    //     results[0]["EventList"] === "start" && result["EventList"] &&
+    //     result["EventList"] === "Complete"
+    //   ) {
+    //     break;
+    //   }
+    //
+    //   // When it's just a single event, but make sure we don't break if a list IS being sent...
+    //   if (!results[0]["EventList"] && !result["EventList"]) {
+    //     break;
+    //   }
+    // }
 
     return results;
   }
@@ -235,10 +240,40 @@ export class DAMI {
             );
             this.close();
             break;
+          }
+          this.log("Received event from the AMI", "info");
+
+          // Format and construct the data
+          const eventStr = new TextDecoder().decode(chunk);
+          const eventArr = eventStr.split("\r\n\r\n").filter(event => event.trim() !== "")
+          const parsedEvents: Event[] = []
+          eventArr.forEach(event => {
+            parsedEvents.push(this.formatAMIResponse(event))
+          })
+
+          // for when errors occur
+          parsedEvents.forEach(result => {
+            if (result["Response"] && result["Response"] === "Error") {
+              throw new Error(
+                  result["Message"]
+                      ? result["Message"].toString()
+                      : "Unknown error. " + JSON.stringify(result),
+              );
+            }
+          })
+
+          // Check if an op is waiting for this message
+          const eventWithActionId = parsedEvents.find(event => {
+            return !!event["ActionID"]
+          })
+          if (eventWithActionId && eventWithActionId["ActionID"]) {
+            const actionId =  eventWithActionId["ActionID"] as number
+            if (this.ops[actionId]) {
+              this.ops[actionId].resolve(parsedEvents)
+              delete this.ops[actionId]
+            }
           } else {
-            this.log("Received event from the AMI", "info");
-            const event = new TextDecoder().decode(chunk);
-            await this.handleAMIResponse(event);
+            await this.handleAMIResponse(eventStr);
           }
         }
       } catch (e) {
