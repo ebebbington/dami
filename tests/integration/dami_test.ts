@@ -1,8 +1,7 @@
 import { Rhum } from "../deps.ts";
 import { DAMI } from "../../mod.ts";
-import type { Action, Event } from "../../mod.ts";
 import { ami, auth } from "../utils.ts";
-import { deferred } from "../../deps";
+import { deferred } from "../../deps.ts";
 
 const expectedSipConfResponse = [{
   ActionID: 4,
