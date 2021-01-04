@@ -126,7 +126,7 @@ export class DAMI {
       if (result["Message"] === "Authentication failed") {
         this.close();
         throw new Error(
-            `Authentication failed. Unable to login. Check your username and password are correct.`,
+          `Authentication failed. Unable to login. Check your username and password are correct.`,
         );
       }
 
