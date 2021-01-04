@@ -11,7 +11,7 @@
     "./mod.ts",
     "./deps.ts"
   ],
-  "version": "4.0.1",
+  "version": "4.1.0",
   "entry": "./mod.ts",
   "ignore": [
     ".git"
