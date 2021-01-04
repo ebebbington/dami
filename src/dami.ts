@@ -32,6 +32,8 @@ export type Event = { [key: string]: string | number } & { Output?: string[] };
 
 export type Action = { [key: string]: string | number };
 
+export type Cb = (event: Event) => void;
+
 const defaultConfigs = {
   hostname: "localhost",
   port: 5038,
@@ -50,14 +52,18 @@ export class DAMI {
   public conn: Deno.Conn | null = null;
 
   /**
+   * Tracks whether we do have a connection to the AMI
+   */
+  public connected = false;
+
+  /**
    * Holds all events user wishes to listen on, where the
    * index is the action id (if trigger events with `to`),
    * or the event name when simple listening with `on`
    *
    * Specifically for on listeners
    */
-  private on_listeners: Map<number | string, (event: Event) => void> =
-    new Map();
+  private on_listeners: Map<string, Cb> = new Map();
 
   private ops: Record<number, Deferred<Event[]>> = {};
 
@@ -78,17 +84,22 @@ export class DAMI {
     } catch (err) {
       // dont  need to do anything
     }
+    this.connected = false;
   }
 
   /**
-   * Connect to the server, and authenticate (login)
+   * Connect to the server, and authenticate (login).
+   * If a listener has been created for `FullyBooted`,
+   * this method will also call that listener
    *
    * @param auth - Username and secret to use in the login event
+   *
+   * @returns An array containing the data for the auth response and fully booted event
    */
   public async connect(
     auth: { username: string; secret: string },
   ): Promise<[SuccessAuthEvent, FullyBootedEvent]> {
-    if (this.conn) {
+    if (this.connected) {
       throw new Error("A connection has already been made");
     }
     // Connect
@@ -104,6 +115,7 @@ export class DAMI {
         port: this.configs.port,
       });
     }
+    this.connected = true;
 
     // Get the connect message out of the way
     for await (const message of readStringDelim(this.conn, "\r\n")) {
@@ -140,13 +152,19 @@ export class DAMI {
         break;
       }
     }
+    const authEvent = loginEvents[0] as SuccessAuthEvent;
+    const fullyBootedEvent = loginEvents[1] as FullyBootedEvent;
 
     // Listen
     await this.listen();
 
+    // If a user has created a `FullyBooted` listener, call that also
+    if (this.on_listeners.has("FullyBooted")) {
+      const listener = this.on_listeners.get("FullyBooted") as Cb;
+      listener(fullyBootedEvent);
+    }
+
     // Return the auth/login events data
-    const authEvent = loginEvents[0] as SuccessAuthEvent;
-    const fullyBootedEvent = loginEvents[1] as FullyBootedEvent;
     return [authEvent, fullyBootedEvent];
   }
 
@@ -206,6 +224,30 @@ export class DAMI {
   }
 
   /**
+   * Remove  a given listener.
+   * Throws an error if no listner is set for the given event name
+   *
+   * @param eventName - The event for which you created a listener for
+   *
+   * @example
+   * ```ts
+   * Dami.on("PeerStatus", (event: Event) => {
+   *
+   * })
+   * Dami.removeListener("PeerStatus"
+   * ```
+   */
+  public removeListener(eventName: string): void {
+    if (this.on_listeners.has(eventName) === false) {
+      throw new Error(
+        `Cannot remove listener for ${eventName}, as one doesn't exist`,
+      );
+    }
+    this.on_listeners.delete(eventName);
+    this.log(`Removed  event listener for: "${eventName}`, "info");
+  }
+
+  /**
    * Listens for any events from the AMI that it sends itself
    */
   private listen(): void {
@@ -254,7 +296,7 @@ export class DAMI {
         }
       } catch (err) {
         if (err.message.indexOf("Bad resource ID") > -1) {
-          // don't do anything here as its ok. This is because when the connection is closed, thee for await inside the try will throw an error
+          this.connected = false;
           return;
         }
         throw new Error(err.message);
@@ -279,16 +321,16 @@ export class DAMI {
         // Get the listener and call it
         events.forEach(async (event) => {
           const eventName = event["Event"] as string;
-          const listener = this.on_listeners.get(eventName);
-          if (listener) {
-            this.log("Found listener for " + eventName + " event", "info");
-            await listener(event);
-          } else {
+          if (this.on_listeners.has(eventName) === false) {
             this.log(
               "No listener was found for " + event["Event"] + " event",
               "info",
             );
+            return;
           }
+          this.log("Found listener for " + eventName + " event", "info");
+          const listener = this.on_listeners.get(eventName) as Cb;
+          await listener(event);
         });
       }
 

@@ -22,6 +22,7 @@
     - [Send A Command](#send-a-command)
     - [Listen For Events](#listen-for-events)
     - [Send An Action](#send-an-action)
+    - [Remove a Listener](#remove-a-listener)
 - [API Documentation](#api-documentation)
 
 ## What Is DAMI
@@ -107,8 +108,13 @@ const myUser = {
 
 const Dami = new DAMI(myPbx)
 
+// As well as `connect()` returning the fully booted event, if a listener has been created beforehand, then it will also be called
+Dami.on("FullyBooted", (event) => {
+
+})
+
 // Will wait to connect and authenticate with the AMI, no need for callbacks or event listeners!
-const authMessage = await Dami.connect(myUser) // If authentication doesn't match, an error will be thrown here.
+const authResponse = await Dami.connect(myUser) // If authentication doesn't match, an error will be thrown here. Returns an array containing two objects: the auth response and FullyBooted event
 
 // Send action
 await Dami.to("Originate",  {
@@ -154,7 +160,14 @@ const user = {
   username: "admin",
   secret: "mysecret"
 }
+
+// If a listener is created, then it will also be called, alongside the same result being returned from `.connect()`
+Dami.on("FullyBooted", (event) => {
+
+})
+
 const res = await Dami.connect(user)
+console.log("Are we connected: " + Dami.connected)
 console.log(res)
 // [
 //   { 
@@ -285,6 +298,20 @@ console.log(peerEntries)
 //   },
 //   { Event: "PeerlistComplete", ActionID: 1, EventList: "Complete", ListItems: 2 }
 // ]
+```
+
+### Remove a Listener
+
+Whilst you can create listeners, you can also remove them if you wish to. This means that your listener will be deleted, and it will no longer handle the events sent by Asterisk, for that event name
+
+```typescript
+Dami.on("PeerStatus", (event: Event) => {
+
+})
+//  Maybe somewhere down the line, you would like to stop listening:
+Dami.removeListener("PeerStatus") // Throws an error if no listener has been set for that event name
+Dami.removeListener("Hello") // Will throw an error
+Dami.removeListener("PeerStatus") // Will now throw an error as the listener has already been removed
 ```
 
 ## API Documentation

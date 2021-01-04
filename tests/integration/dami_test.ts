@@ -129,6 +129,30 @@ Rhum.testPlan("tests/integration/dami_test.ts", () => {
       Rhum.asserts.assertEquals(res[0]["Response"], "Success");
     });
   });
+  Rhum.testSuite("Reconnecting", () => {
+    Rhum.testCase("Can re connect after closing", async () => {
+      const Dami = new DAMI(ami);
+      const promise1 = deferred();
+      let promise1Done = false;
+      const promise2 = deferred();
+      Dami.on("FullyBooted", (event) => {
+        if (promise1Done === false) {
+          promise1.resolve();
+          promise1Done = true;
+        } else {
+          promise2.resolve();
+        }
+      });
+      await Dami.connect(auth);
+      await promise1;
+      Dami.close();
+      await Dami.connect(auth);
+      await promise2;
+      const res = await Dami.ping();
+      Dami.close();
+      Rhum.asserts.assertEquals(res, true);
+    });
+  });
 });
 
 Rhum.run();
