@@ -108,7 +108,7 @@ const myUser = {
 const Dami = new DAMI(myPbx)
 
 // Will wait to connect and authenticate with the AMI, no need for callbacks or event listeners!
-await Dami.connect(myUser) // If authentication doesn't match, an error will be thrown here.
+const authMessage = await Dami.connect(myUser) // If authentication doesn't match, an error will be thrown here.
 
 // Send action
 await Dami.to("Originate",  {
