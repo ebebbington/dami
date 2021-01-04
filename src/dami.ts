@@ -122,6 +122,14 @@ export class DAMI {
     const loginEvents: Event[] = [];
     for await (const message of readStringDelim(this.conn, "\r\n\r\n")) { // Usually, we get a message aying auth i accepted, then we get the fully booted event, but sometimes, a "MessageWaiting" event is the 2nd message we get
       const result = this.formatAMIResponse(message);
+
+      if (result["Message"] === "Authentication failed") {
+        this.close();
+        throw new Error(
+            `Authentication failed. Unable to login. Check your username and password are correct.`,
+        );
+      }
+
       if (
         result["Event"] === "FullyBooted" ||
         result["Message"] === "Authentication accepted"
@@ -131,12 +139,6 @@ export class DAMI {
       if (loginEvents.length === 2) {
         break;
       }
-    }
-    if (loginEvents[0]["Message"] === "Authentication failed") {
-      this.close();
-      throw new Error(
-        `Authentication failed. Unable to login. Check your username and password are correct.`,
-      );
     }
 
     // Listen
@@ -215,9 +217,6 @@ export class DAMI {
           if (message.trim() === "") {
             return;
           }
-
-          console.log("got message :)");
-          console.log(message);
 
           // Format and construct the data
           const event = this.formatAMIResponse(message);

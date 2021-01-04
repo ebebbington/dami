@@ -66,7 +66,7 @@ Rhum.testPlan("tests/integration/dami_test.ts", () => {
       // we're just going to wait for the first event asterisk sentds back, which is a while....
       const Dami = new DAMI(ami);
       await Dami.connect(auth);
-      console.log(
+      console.info(
         "It is normal for this to take a long time, for me on my host machine it takes around 3m 45s",
       );
       const promise = deferred();
