@@ -1,7 +1,7 @@
 import { Rhum } from "../deps.ts";
 import { DAMI } from "../../mod.ts";
-import type { Action, Event } from "../../mod.ts";
 import { ami, auth } from "../utils.ts";
+import { deferred } from "../../deps.ts";
 
 const expectedSipConfResponse = [{
   ActionID: 4,
@@ -27,9 +27,9 @@ const expectedSipConfResponse = [{
 }];
 
 Rhum.testPlan("tests/integration/dami_test.ts", () => {
-  Rhum.testSuite("Events with Output", () => {
+  Rhum.testSuite("Command", () => {
     Rhum.testCase(
-      "An event with output returns the data correctly",
+      "An event with output (Command) returns the data correctly",
       async () => {
         const Dami = new DAMI(ami);
         await Dami.connect(auth);
@@ -128,14 +128,6 @@ Rhum.testPlan("tests/integration/dami_test.ts", () => {
       );
       Rhum.asserts.assertEquals(res[0]["Response"], "Success");
     });
-  });
-  Rhum.testSuite("Sending Doesn't Block Listener", () => {
-    Rhum.testCase(
-      "Sending an event shouldn't block the listener from sending back events that aren't triggered by actions",
-      () => {
-        Rhum.asserts.assert(true);
-      },
-    );
   });
 });
 

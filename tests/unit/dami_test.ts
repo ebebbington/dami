@@ -1,4 +1,5 @@
-import { deferred, Rhum } from "../deps.ts";
+import { Rhum } from "../deps.ts";
+import { deferred } from "../../deps.ts";
 import { DAMI } from "../../mod.ts";
 import { ami, auth } from "../utils.ts";
 

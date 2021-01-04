@@ -2,7 +2,7 @@
  * Hostname of the server to connect to
  * Port of the server to connect to
  */
-import { readStringDelim } from "../deps.ts";
+import { Deferred, deferred, readStringDelim } from "../deps.ts";
 
 type SuccessAuthEvent = {
   Response: "Success";
@@ -58,6 +58,8 @@ export class DAMI {
    */
   private on_listeners: Map<number | string, (event: Event) => void> =
     new Map();
+
+  private ops: Record<number, Deferred<Event[]>> = {};
 
   /**
    * @param configs - Hostname and port of the AMI to connect to
@@ -118,18 +120,25 @@ export class DAMI {
 
     // Get the login events out the way
     const loginEvents: Event[] = [];
-    for await (const message of readStringDelim(this.conn, "\r\n\r\n")) {
+    for await (const message of readStringDelim(this.conn, "\r\n\r\n")) { // Usually, we get a message aying auth i accepted, then we get the fully booted event, but sometimes, a "MessageWaiting" event is the 2nd message we get
       const result = this.formatAMIResponse(message);
-      loginEvents.push(result);
+
+      if (result["Message"] === "Authentication failed") {
+        this.close();
+        throw new Error(
+          `Authentication failed. Unable to login. Check your username and password are correct.`,
+        );
+      }
+
+      if (
+        result["Event"] === "FullyBooted" ||
+        result["Message"] === "Authentication accepted"
+      ) {
+        loginEvents.push(result);
+      }
       if (loginEvents.length === 2) {
         break;
       }
-    }
-    if (loginEvents[0]["Message"] === "Authentication failed") {
-      this.close();
-      throw new Error(
-        `Authentication failed. Unable to login. Check your username and password are correct.`,
-      );
     }
 
     // Listen
@@ -159,7 +168,8 @@ export class DAMI {
    *
    * @param actionName - The name of the event
    * @param data - The data to send across, in key value pairs
-   * @param [cb] - If passed in, will call the callback instead of returning the response
+   *
+   * @returns The events
    */
   public async to(
     actionName: string,
@@ -169,45 +179,19 @@ export class DAMI {
     this.log("Sending event for: " + actionName, "info");
     this.log(JSON.stringify(data), "info");
 
-    // Write message
-    data["ActionID"] = this.generateActionId();
+    // Construct data
+    const actionId = this.generateActionId();
+    data["ActionID"] = actionId;
     const message = this.formatAMIMessage(actionName, data);
+
+    // Write message and wait for response
+    this.ops[actionId] = deferred();
     await this.conn!.write(message);
-
-    const results = [];
-    for await (const message of readStringDelim(this.conn!, "\r\n\r\n")) {
-      const result = this.formatAMIResponse(message);
-
-      // for when errors occur
-      if (result["Response"] === "Error") {
-        throw new Error(
-          result["Message"]
-            ? result["Message"].toString()
-            : "Unknown error. " + JSON.stringify(result),
-        );
-      }
-
-      // save the result
-      results.push(result);
-
-      // When a list is being sent, check so we know when to break
-      if (
-        results.length && results[0]["EventList"] &&
-        results[0]["EventList"] === "start" && result["EventList"] &&
-        result["EventList"] === "Complete"
-      ) {
-        break;
-      }
-
-      // When it's just a single event, but make sure we don't break if a list IS being sent...
-      if (!results[0]["EventList"] && !result["EventList"]) {
-        break;
-      }
+    const results = await this.ops[actionId];
+    if (results[0]["Error"]) {
+      const msg = results[0]["Error"] as string;
+      throw new Error(msg);
     }
-
-    // Because the above loop breaks our listen, reinitiate it
-    this.listen();
-
     return results;
   }
 
@@ -226,25 +210,90 @@ export class DAMI {
    */
   private listen(): void {
     (async () => {
+      const errors: string[] = [];
+      const events: Event[] = [];
       try {
-        for await (const chunk of Deno.iter(this.conn!)) {
-          if (!chunk) {
-            this.log(
-              "Invalid response from event received from the AMI. Closing connection",
-              "error",
+        for await (const message of readStringDelim(this.conn!, "\r\n\r\n")) {
+          if (message.trim() === "") {
+            return;
+          }
+
+          // Format and construct the data
+          const event = this.formatAMIResponse(message);
+          this.log(
+            "Received event from the AMI: " + JSON.stringify(event),
+            "info",
+          );
+
+          // for when errors occur
+          if (event["Response"] === "Error") {
+            errors.push(
+              event["Message"]
+                ? event["Message"].toString()
+                : "Unknown error. " + JSON.stringify(event),
             );
-            this.close();
+          }
+
+          // Save the event
+          events.push(event);
+
+          // When a list is being sent, check so we know when to break
+          if (
+            events.length && events[0]["EventList"] &&
+            events[0]["EventList"] === "start" &&
+            event["EventList"] &&
+            event["EventList"] === "Complete"
+          ) {
             break;
-          } else {
-            this.log("Received event from the AMI", "info");
-            const event = new TextDecoder().decode(chunk);
-            await this.handleAMIResponse(event);
+          }
+
+          // When it's just a single event, but make sure we don't break if a list IS being sent...
+          if (!events[0]["EventList"] && !event["EventList"]) {
+            break;
           }
         }
-      } catch (e) {
-        this.log(e.message, "error");
-        //await this.listen()
+      } catch (err) {
+        if (err.message.indexOf("Bad resource ID") > -1) {
+          // don't do anything here as its ok. This is because when the connection is closed, thee for await inside the try will throw an error
+          return;
+        }
+        throw new Error(err.message);
       }
+
+      // Check if an op is waiting for this message
+      if (events[0]["ActionID"]) {
+        const actionId = events[0]["ActionID"] as number;
+        if (this.ops[actionId]) {
+          // And if there's an error, send that abck so the `to()` function can handle it, because due to this method being async, an errors thrown cannot be caught externally, and we need to catch them in the tests
+          if (errors.length) {
+            events[0]["Error"] = errors[0];
+          }
+          this.ops[actionId].resolve(events);
+          delete this.ops[actionId];
+        }
+      } else { // Otherwise it's a normal event sent by asterisk, so handle it like so. By here, there should only ever by one item in the results variable anyways
+        // Check for errors first
+        if (errors.length) {
+          throw new Error(errors[0]);
+        }
+        // Get the listener and call it
+        events.forEach(async (event) => {
+          const eventName = event["Event"] as string;
+          const listener = this.on_listeners.get(eventName);
+          if (listener) {
+            this.log("Found listener for " + eventName + " event", "info");
+            await listener(event);
+          } else {
+            this.log(
+              "No listener was found for " + event["Event"] + " event",
+              "info",
+            );
+          }
+        });
+      }
+
+      // Start listening again
+      await this.listen();
     })();
   }
 
@@ -313,6 +362,9 @@ export class DAMI {
     return responseObject;
   }
 
+  /**
+   * Creates the next action id for us to use when sending actions
+   */
   private generateActionId(): number {
     nextActionId++;
     if (
@@ -322,39 +374,6 @@ export class DAMI {
       nextActionId = 1;
     }
     return nextActionId;
-  }
-
-  /**
-   * Responsible for handling a response from the AMI, to call any listeners on the event name
-   *
-   * @param message - Response from AMI
-   */
-  private async handleAMIResponse(message: string): Promise<void> {
-    const event = this.formatAMIResponse(message);
-
-    // If it has an action id, then it's not for us. Probably an edge case as we shouldn't be handling those.
-    if (event["ActionID"]) {
-      throw new Error(
-        "Unknown error, this is most likely a bug. Report an issue describing how you got to this stage",
-      );
-    }
-
-    // or for when errors occur. Not sure if this would ever happen
-    if (event["Response"] && event["Response"] === "Error") {
-      throw new Error(event["Message"].toString());
-    }
-
-    // Get the listener and call it
-    const listener = this.on_listeners.get(event["Event"]);
-    if (listener) {
-      this.log("Found listener for " + event["Event"] + " event", "info");
-      await listener(event);
-    } else {
-      this.log(
-        "No listener was found for " + event["Event"] + " event",
-        "info",
-      );
-    }
   }
 
   /**
