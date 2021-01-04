@@ -9,7 +9,8 @@
     "./dami-logo.png",
     "./LICENSE",
     "./mod.ts",
-    "./deps.ts"
+    "./deps.ts",
+    "./examples/*.ts"
   ],
   "version": "4.1.0",
   "entry": "./mod.ts",
