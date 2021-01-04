@@ -27,9 +27,9 @@ const expectedSipConfResponse = [{
 }];
 
 Rhum.testPlan("tests/integration/dami_test.ts", () => {
-  Rhum.testSuite("Events with Output", () => {
+  Rhum.testSuite("Command", () => {
     Rhum.testCase(
-      "An event with output returns the data correctly",
+      "An event with output (Command) returns the data correctly",
       async () => {
         const Dami = new DAMI(ami);
         await Dami.connect(auth);
@@ -57,77 +57,6 @@ Rhum.testPlan("tests/integration/dami_test.ts", () => {
           "2 sip peers [Monitored: 0 online, 0 offline Unmonitored: 0 online, 2 offline]",
         );
         Dami.close();
-      },
-    );
-  });
-  Rhum.testSuite("Generic events", () => {
-    Rhum.testCase("Should handle generic events sent by asterisk", async () => { // its quite normal for this to take 3m 45s, or less or more
-      // we're just going to wait for the first event asterisk sentds back, which is a while....
-      const Dami = new DAMI(ami);
-      await Dami.connect(auth);
-      console.info(
-        "It is normal for this to take a long time, for me on my host machine it takes around 3m 45s",
-      );
-      const promise = deferred();
-      Dami.on("PeerStatus", () => {
-        promise.resolve();
-      });
-      await promise;
-      Dami.close();
-      Rhum.asserts.assertEquals(true, true); // we're really just making sure the promise gets resolved
-    });
-  });
-  Rhum.testSuite("Generic events and triggered events", () => {
-    Rhum.testCase(
-      "Triggering an event should interfere with handling generic events after",
-      async () => {
-        const Dami = new DAMI(ami);
-        await Dami.connect(auth);
-        await Dami.to("SIPPeers", {});
-        const promise = deferred();
-        Dami.on("PeerStatus", (event) => {
-          promise.resolve();
-        });
-        await promise;
-        Dami.close();
-      },
-    );
-    Rhum.testCase(
-      "Generic events shouldn't interfere with handling triggered events after",
-      async () => {
-        const Dami = new DAMI(ami);
-        await Dami.connect(auth);
-        const promise = deferred();
-        Dami.on("PeerStatus", (event) => {
-          promise.resolve();
-        });
-        await promise;
-        const result = await Dami.to("GetConfig", { Filename: "sip.conf" });
-        Dami.close();
-        Rhum.asserts.assertEquals(result, [
-          {
-            Response: "Success",
-            ActionID: 3,
-            "Category-000000": "general",
-            "Line-000000-000000": "transport=udp",
-            "Category-000001": 6001,
-            "Templates-000001": "friends_internal",
-            "Line-000001-000000": "type=friend",
-            "Line-000001-000001": "host=dynamic",
-            "Line-000001-000002": "context=from-internal",
-            "Line-000001-000003": "disallow=all",
-            "Line-000001-000004": "allow=ulaw",
-            "Line-000001-000005": "secret=verysecretpassword",
-            "Category-000002": 6002,
-            "Templates-000002": "friends_internal",
-            "Line-000002-000000": "type=friend",
-            "Line-000002-000001": "host=dynamic",
-            "Line-000002-000002": "context=from-internal",
-            "Line-000002-000003": "disallow=all",
-            "Line-000002-000004": "allow=ulaw",
-            "Line-000002-000005": "secret=othersecretpassword",
-          },
-        ]);
       },
     );
   });
