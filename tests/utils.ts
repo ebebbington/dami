@@ -1,5 +1,5 @@
 export const ami = {
-  hostname: "0.0.0.0",
+  hostname: "127.0.0.1",
   port: 5038,
   logger: false,
 };
