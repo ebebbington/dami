@@ -4,6 +4,33 @@ import { DAMI } from "../../mod.ts";
 import { ami, auth } from "../utils.ts";
 
 Rhum.testPlan("tests/unit/dami_test.ts", () => {
+  Rhum.testSuite("connected", () => {
+    Rhum.testCase("Set to true when we connect", async () => {
+      const Dami = new DAMI(ami);
+      await Dami.connect(auth);
+      Rhum.asserts.assertEquals(Dami.connected, true);
+      Dami.close();
+    });
+    Rhum.testCase("Set to false by default", () => {
+      const Dami = new DAMI(ami);
+      Rhum.asserts.assertEquals(Dami.connected, false);
+    });
+    Rhum.testCase("Set to false when we close", async () => {
+      const Dami = new DAMI(ami);
+      await Dami.connect(auth);
+      Dami.close();
+      Rhum.asserts.assertEquals(Dami.connected, false);
+    });
+    Rhum.testCase("Set to false when we fail authentication", async () => {
+      const Dami = new DAMI(ami);
+      try {
+        await Dami.connect({ username: "ass", secret: "fff" });
+      } catch (err) {
+        // do nothing, we dont care that it throws
+      }
+      Rhum.asserts.assertEquals(Dami.connected, false);
+    });
+  });
   Rhum.testSuite("close()", () => {
     Rhum.testCase("Closes the connection", async () => {
       const Dami = new DAMI(ami);
@@ -50,6 +77,23 @@ Rhum.testPlan("tests/unit/dami_test.ts", () => {
         Rhum.asserts.assertEquals(Object.keys(res[1]).length, 5);
         Rhum.asserts.assertEquals(res[1]["Privilege"], "system,all");
         Rhum.asserts.assertEquals(res[1]["Status"], "Fully Booted");
+      },
+    );
+    Rhum.testCase(
+      "Also calls a FullyBooted listener if set, when connected",
+      async () => {
+        const Dami = new DAMI(ami);
+        const promise = deferred();
+        Dami.on("FullyBooted", (event) => {
+          promise.resolve(event);
+        });
+        await Dami.connect(auth);
+        // deno-lint-ignore no-explicit-any
+        const event: any = await promise;
+        Dami.close();
+        Rhum.asserts.assert(!!event);
+        Rhum.asserts.assertEquals(Object.keys(event).length, 5);
+        Rhum.asserts.assertEquals(event["Event"], "FullyBooted");
       },
     );
     Rhum.testCase("Throws an error when auth creds are invalid", async () => {
@@ -130,18 +174,49 @@ Rhum.testPlan("tests/unit/dami_test.ts", () => {
   });
   Rhum.testSuite("on()", () => {
     Rhum.testCase(
-      "Registers a listener", // TODO
+      "Registers a listener",
       async () => {
         const Dami = new DAMI(ami);
-        //const promise = deferred();
+        const promise = deferred();
         Dami.on("FullyBooted", (data) => {
-          //promise.resolve();
+          promise.resolve();
         });
         await Dami.connect(auth);
-        //await promise;
+        await promise;
         Dami.close();
       },
     );
+  });
+  Rhum.testSuite("removeListener()", () => {
+    Rhum.testCase(
+      "An error is thrown when trying to remove a listen that doesn't exist",
+      () => {
+        const Dami = new DAMI(ami);
+        Rhum.asserts.assertThrows(() => {
+          Dami.removeListener("I dont exist");
+        });
+      },
+    );
+    Rhum.testCase("Can remove a listener that exists", async () => {
+      const Dami = new DAMI(ami);
+      const promise = deferred();
+      let cbCalled = false;
+      Dami.on("FullyBooted", (event) => {
+        if (cbCalled) {
+          throw new Error(
+            "I should not be called a second time, the listener should have removed me",
+          );
+        }
+        cbCalled = true;
+        promise.resolve();
+      });
+      await Dami.connect(auth);
+      await promise;
+      Dami.close();
+      Dami.removeListener("FullyBooted");
+      await Dami.connect(auth);
+      Dami.close();
+    });
   });
 });
 
