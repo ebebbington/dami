@@ -32,7 +32,7 @@ export type Event = { [key: string]: string | number } & { Output?: string[] };
 
 export type Action = { [key: string]: string | number };
 
-export type Cb = (event: Event) => void;
+export type Cb = ((event: Event) => void) | ((event: Event) => Promise<void>);
 
 const defaultConfigs = {
   hostname: "localhost",
@@ -156,7 +156,7 @@ export class DAMI {
     const fullyBootedEvent = loginEvents[1] as FullyBootedEvent;
 
     // Listen
-    await this.listen();
+    this.listen();
 
     // If a user has created a `FullyBooted` listener, call that also
     if (this.on_listeners.has("FullyBooted")) {
@@ -335,7 +335,7 @@ export class DAMI {
       }
 
       // Start listening again
-      await this.listen();
+      this.listen();
     })();
   }
 
