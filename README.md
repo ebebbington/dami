@@ -6,10 +6,10 @@
   <a href="https://github.com/ebebbington/dami/actions">
     <img src="https://img.shields.io/github/workflow/status/ebebbington/dami/master?label=Tests">
   </a>
-  <a href="https://github.com/drashland/dami/releases">
+  <a href="https://github.com/ebebbington/dami/releases">
     <img src="https://img.shields.io/github/release/ebebbington/dami.svg?color=bright_green&label=latest">
   </a>
-  <a href="https://github.com/drashland/dami/actions">
+  <a href="https://github.com/ebebbington/dami/actions">
     <img src="https://img.shields.io/github/workflow/status/ebebbington/dami/CodeQL?label=CodeQL">
   </a>
   <a href="https://sonarcloud.io/dashboard?id=ebebbington_dami">
