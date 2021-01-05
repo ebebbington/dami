@@ -4,7 +4,7 @@
 </p>
 <p align="center">
   <a href="https://github.com/ebebbington/dami/actions">
-    <img src="https://img.shields.io/github/workflow/status/ebebbington/dami/master?label=ci">
+    <img src="https://img.shields.io/github/workflow/status/ebebbington/dami/master?label=Tests">
   </a>
   <a href="https://github.com/drashland/dami/releases">
     <img src="https://img.shields.io/github/release/ebebbington/dami.svg?color=bright_green&label=latest">
