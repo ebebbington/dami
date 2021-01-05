@@ -9,6 +9,9 @@
   <a href="https://github.com/drashland/dami/releases">
     <img src="https://img.shields.io/github/release/ebebbington/dami.svg?color=bright_green&label=latest">
   </a>
+  <a href="https://github.com/drashland/dami/actions">
+    <img src="https://img.shields.io/github/workflow/status/ebebbington/dami/CodeQL?label=CodeQL">
+  </a>
   <a href="https://sonarcloud.io/dashboard?id=ebebbington_dami">
     <img src="https://sonarcloud.io/api/project_badges/measure?project=ebebbington_dami&metric=alert_status">
   </a>
