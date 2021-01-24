@@ -20,24 +20,30 @@
 ---
 
 ## Table of Contents
+
 - [What Is DAMI](#what-is-dami)
 - [Quickstart](#quickstart)
 - [Examples](#examples)
-    - [Ping](#ping)
-    - [Get Authentication Response](#get-authentication-response)
-    - [Send A Command](#send-a-command)
-    - [Listen For Events](#listen-for-events)
-    - [Send An Action](#send-an-action)
-    - [Remove a Listener](#remove-a-listener)
+  - [Ping](#ping)
+  - [Get Authentication Response](#get-authentication-response)
+  - [Send A Command](#send-a-command)
+  - [Listen For Events](#listen-for-events)
+  - [Send An Action](#send-an-action)
+  - [Remove a Listener](#remove-a-listener)
 - [API Documentation](#api-documentation)
 
 ## What Is DAMI
 
-DAMI (Deno Asterisk Manager Interface) is an AMI client for Deno, to interact with the AMI on your Asterisk PBX.
+DAMI (Deno Asterisk Manager Interface) is an AMI client for Deno, to interact
+with the AMI on your Asterisk PBX.
 
-DAMI supports sending every action, and capable of handling every event outlined in the [AMI API](https://www.voip-info.org/asterisk-manager-api/.
+DAMI supports sending every action, and capable of handling every event outlined
+in the [AMI API](https://www.voip-info.org/asterisk-manager-api/.
 
-The data DAMI will return to you is exactly what Asterisk would, but objects consisting of key/value pairs in an array. For example, take the `Originate` action. From Asterisks' documentation, they outline it requires the following data:
+The data DAMI will return to you is exactly what Asterisk would, but objects
+consisting of key/value pairs in an array. For example, take the `Originate`
+action. From Asterisks' documentation, they outline it requires the following
+data:
 
 ```
 Action: Originate
@@ -62,8 +68,8 @@ await Dami.to("Originate", {
   Callerid: 3125551212,
   Timeout: 30000,
   Variable: "var1=23|var2=24|var3=25",
-  ActionID: "ABC45678901234567890"
-})
+  ActionID: "ABC45678901234567890",
+});
 ```
 
 Take the `FullyBooted` event, this is what Asterisk outlines it should contain:
@@ -98,36 +104,35 @@ DAMI would return it like:
 ## QuickStart
 
 ```typescript
-import { DAMI, Action, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
-import type { Event, Action } from "https://deno.land/x/dami@v4.1.0/mod.ts";
+import { Action, DAMI, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
+import type { Action, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
 
 const myPbx = {
   hostname: "127.0.0.1", // IP of your pbx, or container name if using docker, eg "asterisk_pbx"
   port: 5058, // Port of your pbx,
-  logger: true // defaults to true, enables logging from DAMI
+  logger: true, // defaults to true, enables logging from DAMI
   // certFile: "./path/to/cert", // pass in to enable tls
-}
+};
 const myUser = {
   username: "user",
-  secret: "mysecret"
-}
+  secret: "mysecret",
+};
 
-const Dami = new DAMI(myPbx)
+const Dami = new DAMI(myPbx);
 
 // As well as `connect()` returning the fully booted event, if a listener has been created beforehand, then it will also be called
 Dami.on("FullyBooted", (event) => {
-
-})
+});
 
 // Will wait to connect and authenticate with the AMI, no need for callbacks or event listeners!
-const authResponse = await Dami.connect(myUser) // If authentication doesn't match, an error will be thrown here. Returns an array containing two objects: the auth response and FullyBooted event
+const authResponse = await Dami.connect(myUser); // If authentication doesn't match, an error will be thrown here. Returns an array containing two objects: the auth response and FullyBooted event
 
 // Send action
-await Dami.to("Originate",  {
+await Dami.to("Originate", {
   Channel: "sip/12345",
   Exten: 1234,
   Context: "default",
-})
+});
 ```
 
 ## Examples
@@ -136,47 +141,46 @@ await Dami.to("Originate",  {
 
 ```typescript
 import { DAMI } from "https://deno.land/x/dami@v4.1.0/mod.ts";
-import type { Event, Action } from "https://deno.land/x/dami@v4.1.0/mod.ts";
+import type { Action, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
 const ami = {
   hostname: "0.0.0.0",
-  port: 5038
-}
-const Dami = new Dami(ami)
+  port: 5038,
+};
+const Dami = new Dami(ami);
 const user = {
   username: "admin",
-  secret: "mysecret"
-}
-await Dami.connect(user)
-const pong = await Dami.ping()
-assert(pong)
+  secret: "mysecret",
+};
+await Dami.connect(user);
+const pong = await Dami.ping();
+assert(pong);
 ```
 
 ### Get Authentication Response
 
 ```typescript
-import { DAMI, Action, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
-import type { Event, Action } from "https://deno.land/x/dami@v4.1.0/mod.ts";
+import { Action, DAMI, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
+import type { Action, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
 
 const ami = {
   hostname: "0.0.0.0",
-  port: 5038
-}
-const Dami = new Dami(ami)
+  port: 5038,
+};
+const Dami = new Dami(ami);
 const user = {
   username: "admin",
-  secret: "mysecret"
-}
+  secret: "mysecret",
+};
 
 // If a listener is created, then it will also be called, alongside the same result being returned from `.connect()`
 Dami.on("FullyBooted", (event) => {
+});
 
-})
-
-const res = await Dami.connect(user)
-console.log("Are we connected: " + Dami.connected)
-console.log(res)
+const res = await Dami.connect(user);
+console.log("Are we connected: " + Dami.connected);
+console.log(res);
 // [
-//   { 
+//   {
 //     Response: "Success",
 //     Message: "Authentication accepted"
 //   },
@@ -195,64 +199,64 @@ console.log(res)
 The `Output` property is only present for `Command`s.
 
 ```typescript
-import { DAMI, Action, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
-import type { Event, Action } from "https://deno.land/x/dami@v4.1.0/mod.ts";
+import { Action, DAMI, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
+import type { Action, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
 
 const ami = {
   hostname: "0.0.0.0",
-  port: 5038
-}
-const Dami = new Dami(ami)
+  port: 5038,
+};
+const Dami = new Dami(ami);
 const user = {
   username: "admin",
-  secret: "mysecret"
-}
-await Dami.connect(user)
+  secret: "mysecret",
+};
+await Dami.connect(user);
 const command = await Dami.to("Command", {
-  Command: "sip show peers"
-})
-console.log(command[0]["Output"])
+  Command: "sip show peers",
+});
+console.log(command[0]["Output"]);
 ```
 
 ### Listen for Events
 
 ```typescript
-import { DAMI, Action, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
-import type { Event, Action } from "https://deno.land/x/dami@v4.1.0/mod.ts";
+import { Action, DAMI, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
+import type { Action, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
 
 const ami = {
   hostname: "0.0.0.0",
-  port: 5038
-}
-const Dami = new Dami(ami)
+  port: 5038,
+};
+const Dami = new Dami(ami);
 const user = {
   username: "admin",
-  secret: "mysecret"
-}
-await Dami.connect(user)
+  secret: "mysecret",
+};
+await Dami.connect(user);
 Dami.on("Hangup", (event: Event) => {
- // ...
-})
+  // ...
+});
 ```
 
 ### Send An Action
 
 ```typescript
-import { DAMI, Action, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
-import type { Event, Action } from "https://deno.land/x/dami@v4.1.0/mod.ts";
+import { Action, DAMI, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
+import type { Action, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
 
 const ami = {
   hostname: "0.0.0.0",
-  port: 5038
-}
-const Dami = new Dami(ami)
+  port: 5038,
+};
+const Dami = new Dami(ami);
 const user = {
   username: "admin",
-  secret: "mysecret"
-}
-await Dami.connect(user)
+  secret: "mysecret",
+};
+await Dami.connect(user);
 const peerEntries = await Dami.to("SIPPeers", {});
-console.log(peerEntries)
+console.log(peerEntries);
 // [
 //   {
 //     Response: "Success",
@@ -308,18 +312,20 @@ console.log(peerEntries)
 
 ### Remove a Listener
 
-Whilst you can create listeners, you can also remove them if you wish to. This means that your listener will be deleted, and it will no longer handle the events sent by Asterisk, for that event name
+Whilst you can create listeners, you can also remove them if you wish to. This
+means that your listener will be deleted, and it will no longer handle the
+events sent by Asterisk, for that event name
 
 ```typescript
 Dami.on("PeerStatus", (event: Event) => {
-
-})
+});
 //  Maybe somewhere down the line, you would like to stop listening:
-Dami.removeListener("PeerStatus") // Throws an error if no listener has been set for that event name
-Dami.removeListener("Hello") // Will throw an error
-Dami.removeListener("PeerStatus") // Will now throw an error as the listener has already been removed
+Dami.removeListener("PeerStatus"); // Throws an error if no listener has been set for that event name
+Dami.removeListener("Hello"); // Will throw an error
+Dami.removeListener("PeerStatus"); // Will now throw an error as the listener has already been removed
 ```
 
 ## API Documentation
 
-See [here](https://doc.deno.land/https/deno.land/x/dami/mod.ts) for the API documentation
+See [here](https://doc.deno.land/https/deno.land/x/dami/mod.ts) for the API
+documentation
