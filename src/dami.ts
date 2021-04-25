@@ -81,7 +81,7 @@ export class DAMI {
     this.log("Closing connection", "info");
     try {
       this.conn!.close();
-    } catch (err) {
+    } catch (_err) {
       // dont  need to do anything
     }
     this.connected = false;

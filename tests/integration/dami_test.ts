@@ -3,28 +3,28 @@ import { DAMI } from "../../mod.ts";
 import { ami, auth } from "../utils.ts";
 import { deferred } from "../../deps.ts";
 
-const expectedSipConfResponse = [{
-  ActionID: 4,
-  Response: "Success",
-  "Category-000000": "general",
-  "Line-000000-000000": "transport=udp",
-  "Category-000001": 6001,
-  "Templates-000001": "friends_internal",
-  "Line-000001-000000": "type=friend",
-  "Line-000001-000001": "host=dynamic",
-  "Line-000001-000002": "context=from-internal",
-  "Line-000001-000003": "disallow=all",
-  "Line-000001-000004": "allow=ulaw",
-  "Line-000001-000005": "secret=verysecretpassword",
-  "Category-000002": 6002,
-  "Templates-000002": "friends_internal",
-  "Line-000002-000000": "type=friend",
-  "Line-000002-000001": "host=dynamic",
-  "Line-000002-000002": "context=from-internal",
-  "Line-000002-000003": "disallow=all",
-  "Line-000002-000004": "allow=ulaw",
-  "Line-000002-000005": "secret=othersecretpassword",
-}];
+// const expectedSipConfResponse = [{
+//   ActionID: 4,
+//   Response: "Success",
+//   "Category-000000": "general",
+//   "Line-000000-000000": "transport=udp",
+//   "Category-000001": 6001,
+//   "Templates-000001": "friends_internal",
+//   "Line-000001-000000": "type=friend",
+//   "Line-000001-000001": "host=dynamic",
+//   "Line-000001-000002": "context=from-internal",
+//   "Line-000001-000003": "disallow=all",
+//   "Line-000001-000004": "allow=ulaw",
+//   "Line-000001-000005": "secret=verysecretpassword",
+//   "Category-000002": 6002,
+//   "Templates-000002": "friends_internal",
+//   "Line-000002-000000": "type=friend",
+//   "Line-000002-000001": "host=dynamic",
+//   "Line-000002-000002": "context=from-internal",
+//   "Line-000002-000003": "disallow=all",
+//   "Line-000002-000004": "allow=ulaw",
+//   "Line-000002-000005": "secret=othersecretpassword",
+// }];
 
 Rhum.testPlan("tests/integration/dami_test.ts", () => {
   Rhum.testSuite("Command", () => {
@@ -135,7 +135,7 @@ Rhum.testPlan("tests/integration/dami_test.ts", () => {
       const promise1 = deferred();
       let promise1Done = false;
       const promise2 = deferred();
-      Dami.on("FullyBooted", (event) => {
+      Dami.on("FullyBooted", () => {
         if (promise1Done === false) {
           promise1.resolve();
           promise1Done = true;

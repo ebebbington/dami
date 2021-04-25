@@ -25,7 +25,7 @@ Rhum.testPlan("tests/unit/dami_test.ts", () => {
       const Dami = new DAMI(ami);
       try {
         await Dami.connect({ username: "ass", secret: "fff" });
-      } catch (err) {
+      } catch (_err) {
         // do nothing, we dont care that it throws
       }
       Rhum.asserts.assertEquals(Dami.connected, false);
@@ -178,7 +178,7 @@ Rhum.testPlan("tests/unit/dami_test.ts", () => {
       async () => {
         const Dami = new DAMI(ami);
         const promise = deferred();
-        Dami.on("FullyBooted", (data) => {
+        Dami.on("FullyBooted", () => {
           promise.resolve();
         });
         await Dami.connect(auth);
@@ -201,7 +201,7 @@ Rhum.testPlan("tests/unit/dami_test.ts", () => {
       const Dami = new DAMI(ami);
       const promise = deferred();
       let cbCalled = false;
-      Dami.on("FullyBooted", (event) => {
+      Dami.on("FullyBooted", () => {
         if (cbCalled) {
           throw new Error(
             "I should not be called a second time, the listener should have removed me",
