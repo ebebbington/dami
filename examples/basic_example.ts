@@ -14,6 +14,6 @@ const auth = {
 const Dami = new DAMI(ami);
 await Dami.connect(auth);
 await Dami.to("GetConfig", { filename: "sip.conf" });
-Dami.on("PeerStatus", (event) => {
+Dami.on("PeerStatus", () => {
   console.log("GOT PEER STATUS");
 });
