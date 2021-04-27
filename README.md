@@ -104,8 +104,8 @@ DAMI would return it like:
 ## QuickStart
 
 ```typescript
-import { Action, DAMI, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
-import type { Action, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
+import { Action, DAMI, Event } from "https://deno.land/x/dami@v4.1.1/mod.ts";
+import type { Action, Event } from "https://deno.land/x/dami@v4.1.1/mod.ts";
 
 const myPbx = {
   hostname: "127.0.0.1", // IP of your pbx, or container name if using docker, eg "asterisk_pbx"
@@ -140,8 +140,8 @@ await Dami.to("Originate", {
 ### Ping
 
 ```typescript
-import { DAMI } from "https://deno.land/x/dami@v4.1.0/mod.ts";
-import type { Action, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
+import { DAMI } from "https://deno.land/x/dami@v4.1.1/mod.ts";
+import type { Action, Event } from "https://deno.land/x/dami@v4.1.1/mod.ts";
 const ami = {
   hostname: "0.0.0.0",
   port: 5038,
@@ -159,8 +159,8 @@ assert(pong);
 ### Get Authentication Response
 
 ```typescript
-import { Action, DAMI, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
-import type { Action, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
+import { Action, DAMI, Event } from "https://deno.land/x/dami@v4.1.1/mod.ts";
+import type { Action, Event } from "https://deno.land/x/dami@v4.1.1/mod.ts";
 
 const ami = {
   hostname: "0.0.0.0",
@@ -199,8 +199,8 @@ console.log(res);
 The `Output` property is only present for `Command`s.
 
 ```typescript
-import { Action, DAMI, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
-import type { Action, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
+import { Action, DAMI, Event } from "https://deno.land/x/dami@v4.1.1/mod.ts";
+import type { Action, Event } from "https://deno.land/x/dami@v4.1.1/mod.ts";
 
 const ami = {
   hostname: "0.0.0.0",
@@ -221,8 +221,8 @@ console.log(command[0]["Output"]);
 ### Listen for Events
 
 ```typescript
-import { Action, DAMI, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
-import type { Action, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
+import { Action, DAMI, Event } from "https://deno.land/x/dami@v4.1.1/mod.ts";
+import type { Action, Event } from "https://deno.land/x/dami@v4.1.1/mod.ts";
 
 const ami = {
   hostname: "0.0.0.0",
@@ -242,8 +242,8 @@ Dami.on("Hangup", (event: Event) => {
 ### Send An Action
 
 ```typescript
-import { Action, DAMI, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
-import type { Action, Event } from "https://deno.land/x/dami@v4.1.0/mod.ts";
+import { Action, DAMI, Event } from "https://deno.land/x/dami@v4.1.1/mod.ts";
+import type { Action, Event } from "https://deno.land/x/dami@v4.1.1/mod.ts";
 
 const ami = {
   hostname: "0.0.0.0",
