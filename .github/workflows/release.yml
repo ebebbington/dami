@@ -7,9 +7,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: denolib/setup-deno@master
-      - run: deno install -A -f --unstable -n eggs https://x.nest.land/eggs@0.3.3/eggs.ts
+      - uses: denoland/setup-deno@main
+        with:
+          deno-version: "1.9.2"
+      - run: deno install -A -f --unstable -n eggs https://x.nest.land/eggs@0.3.6/eggs.ts
       - run: |
           export PATH="/home/runner/.deno/bin:$PATH"
           eggs link ${{ secrets.NEST_LAND_KEY }}
-          eggs publish --no-check-tests --yes
+          eggs publish --yes
