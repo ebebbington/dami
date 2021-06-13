@@ -118,7 +118,7 @@ export class DAMI {
     this.connected = true;
 
     // Get the connect message out of the way
-    for await (const message of readStringDelim(this.conn, "\r\n")) {
+    for await (const _message of readStringDelim(this.conn, "\r\n")) {
       break;
     }
     this.log(
