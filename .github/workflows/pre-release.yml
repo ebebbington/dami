@@ -22,7 +22,7 @@ jobs:
         run: git push --delete origin ${{ github.ref }}
 
       - name: Install Deno
-        uses: denolib/setup-deno@v2
+        uses: denoland/setup-deno@v1
 
       - name: Bump Versions
         run: deno run -A ./bump_versions.ts --version=${{ github.ref }}
