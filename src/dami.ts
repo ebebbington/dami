@@ -65,7 +65,7 @@ export class DAMI {
    */
   private on_listeners: Map<string, Cb> = new Map();
 
-  private ops: Record<number, Deferred<Event[]>> = {};
+  private ops: Map<number, Deferred<Event[]>> = new Map();
 
   /**
    * @param configs - Hostname and port of the AMI to connect to
@@ -203,9 +203,9 @@ export class DAMI {
     const message = this.formatAMIMessage(actionName, data);
 
     // Write message and wait for response
-    this.ops[actionId] = deferred();
+    this.ops.set(actionId, deferred());
     await this.conn!.write(message);
-    const results = await this.ops[actionId];
+    const results = await this.ops.get(actionId) as Event[];
     if (results[0]["Error"]) {
       const msg = results[0]["Error"] as string;
       throw new Error(msg);
@@ -305,13 +305,13 @@ export class DAMI {
       // Check if an op is waiting for this message
       if (events[0]["ActionID"]) {
         const actionId = events[0]["ActionID"] as number;
-        if (this.ops[actionId]) {
+        if (this.ops.has(actionId)) {
           // And if there's an error, send that abck so the `to()` function can handle it, because due to this method being async, an errors thrown cannot be caught externally, and we need to catch them in the tests
           if (errors.length) {
             events[0]["Error"] = errors[0];
           }
-          this.ops[actionId].resolve(events);
-          delete this.ops[actionId];
+          this.ops.get(actionId)!.resolve(events);
+          this.ops.delete(actionId);
         }
       } else { // Otherwise it's a normal event sent by asterisk, so handle it like so. By here, there should only ever by one item in the results variable anyways
         // Check for errors first
