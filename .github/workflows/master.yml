@@ -23,7 +23,9 @@ jobs:
 
       - name: Tests
         run: |
+          cd tests
           docker-compose up -d
+          cd ..
           deno test --coverage=cov -A tests
           deno coverage cov
           deno coverage --lcov cov > cov.lcov
