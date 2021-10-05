@@ -21,17 +21,18 @@ jobs:
       - name: Install Deno
         uses: denoland/setup-deno@v1
 
-      - name: Unit
+      - name: Tests
         run: |
           cd tests
           docker-compose up -d
-          deno test --allow-net --allow-env unit
+          deno test -A --coverage=cov integration
+          deno coverage --lcov --exclude=tests ./cov > ../cov.lcov
 
-      - name: Integration
-        run: |
-          cd tests
-          docker-compose up -d
-          deno test -A integration
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v1
+        with:
+          name: dami
+          files: cov.lcov
 
   linter:
     runs-on: ubuntu-latest
