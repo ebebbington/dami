@@ -295,7 +295,7 @@ export class DAMI {
           }
         }
       } catch (err) {
-        if (err.message.indexOf("Bad resource ID") > -1) {
+        if (err instanceof Deno.errors.BadResource || err instanceof Deno.errors.Interrupted) {
           this.connected = false;
           return;
         }
