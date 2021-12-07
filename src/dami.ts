@@ -295,7 +295,10 @@ export class DAMI {
           }
         }
       } catch (err) {
-        if (err instanceof Deno.errors.BadResource || err instanceof Deno.errors.Interrupted) {
+        if (
+          err instanceof Deno.errors.BadResource ||
+          err instanceof Deno.errors.Interrupted
+        ) {
           this.connected = false;
           return;
         }
