@@ -37,7 +37,7 @@ export type Cb = ((event: Event) => void) | ((event: Event) => Promise<void>);
 const defaultConfigs = {
   hostname: "localhost",
   port: 5038,
-  logger: true,
+  logger: false,
 };
 
 export class DAMI {
@@ -49,7 +49,7 @@ export class DAMI {
   /**
    * Used for constantly listen on events (such as Hangup)
    */
-  public conn: Deno.Conn | null = null;
+  private conn: Deno.Conn | null = null;
 
   /**
    * Tracks whether we do have a connection to the AMI
@@ -72,6 +72,7 @@ export class DAMI {
    */
   constructor(configs: IConfigs = defaultConfigs) {
     this.configs = configs;
+    console.log(nextActionId);
   }
 
   /**
@@ -429,7 +430,7 @@ export class DAMI {
    */
   private log(message: string, level: LogLevels): void {
     message = "[DAMI] | " + level + " | " + message;
-    if (console[level] !== undefined && this.configs.logger === true) {
+    if (this.configs.logger === true) {
       console[level](message);
     }
   }

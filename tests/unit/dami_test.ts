@@ -36,6 +36,16 @@ Deno.test("close()", async (t) => {
     const Dami = new DAMI(ami);
     await Dami.connect(auth);
     Dami.close();
+    assertThrows(async () => {
+      await Dami.ping();
+    });
+  });
+
+  await t.step("Should not throw if already closed", async () => {
+    const Dami = new DAMI(ami);
+    await Dami.connect(auth);
+    Dami.close();
+    Dami.close();
   });
 });
 
