@@ -1,7 +1,7 @@
 import { deferred } from "../../deps.ts";
 import { DAMI } from "../../mod.ts";
 import { ami, auth } from "../utils.ts";
-import { assertEquals, assertThrows } from "../deps.ts";
+import { assertEquals, assertThrows, assertRejects } from "../deps.ts";
 
 Deno.test("connected", async (t) => {
   await t.step("Set to true when we connect", async () => {
@@ -36,7 +36,7 @@ Deno.test("close()", async (t) => {
     const Dami = new DAMI(ami);
     await Dami.connect(auth);
     Dami.close();
-    assertThrows(async () => {
+    assertRejects(async () => {
       await Dami.ping();
     });
   });
