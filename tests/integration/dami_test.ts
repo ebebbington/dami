@@ -112,7 +112,7 @@ Deno.test("Sending Actions To Return Events Works", async (t) => {
       Command: "sip show channels",
     });
     Dami.close();
-    assertEquals(res[0]["ActionID"], 3);
+    assertEquals(res[0]["ActionID"], 1);
     assertEquals(
       res[0]["Message"],
       "Command output follows",

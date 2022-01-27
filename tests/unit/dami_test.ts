@@ -1,7 +1,7 @@
 import { deferred } from "../../deps.ts";
 import { DAMI } from "../../mod.ts";
 import { ami, auth } from "../utils.ts";
-import { assertEquals, assertThrows, assertRejects } from "../deps.ts";
+import { assertEquals, assertRejects, assertThrows } from "../deps.ts";
 
 Deno.test("connected", async (t) => {
   await t.step("Set to true when we connect", async () => {
@@ -160,7 +160,7 @@ Deno.test("to()", async (t) => {
     assertEquals(result, [
       {
         Response: "Success",
-        ActionID: 3,
+        ActionID: 1,
         "Category-000000": "general",
         "Line-000000-000000": "transport=udp",
         "Category-000001": 6001,

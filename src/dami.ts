@@ -44,7 +44,7 @@ export class DAMI {
    */
   private readonly configs: IConfigs;
 
-  private nextActionId = 0
+  private nextActionId = 0;
 
   /**
    * Used for constantly listen on events (such as Hangup)
