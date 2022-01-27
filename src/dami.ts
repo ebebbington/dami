@@ -24,8 +24,6 @@ interface IConfigs {
   certFile?: string;
 }
 
-let nextActionId = 0;
-
 type LogLevels = "error" | "info" | "log";
 
 export type Event = { [key: string]: string | number } & { Output?: string[] };
@@ -37,7 +35,7 @@ export type Cb = ((event: Event) => void) | ((event: Event) => Promise<void>);
 const defaultConfigs = {
   hostname: "localhost",
   port: 5038,
-  logger: true,
+  logger: false,
 };
 
 export class DAMI {
@@ -46,10 +44,12 @@ export class DAMI {
    */
   private readonly configs: IConfigs;
 
+  private nextActionId = 0;
+
   /**
    * Used for constantly listen on events (such as Hangup)
    */
-  public conn: Deno.Conn | null = null;
+  private conn: Deno.Conn | null = null;
 
   /**
    * Tracks whether we do have a connection to the AMI
@@ -411,14 +411,14 @@ export class DAMI {
    * Creates the next action id for us to use when sending actions
    */
   private generateActionId(): number {
-    nextActionId++;
+    this.nextActionId++;
     if (
-      nextActionId === Number.MAX_SAFE_INTEGER ||
-      (nextActionId - 1) === Number.MAX_SAFE_INTEGER
+      this.nextActionId === Number.MAX_SAFE_INTEGER ||
+      (this.nextActionId - 1) === Number.MAX_SAFE_INTEGER
     ) {
-      nextActionId = 1;
+      this.nextActionId = 1;
     }
-    return nextActionId;
+    return this.nextActionId;
   }
 
   /**
@@ -429,7 +429,7 @@ export class DAMI {
    */
   private log(message: string, level: LogLevels): void {
     message = "[DAMI] | " + level + " | " + message;
-    if (console[level] !== undefined && this.configs.logger === true) {
+    if (this.configs.logger === true) {
       console[level](message);
     }
   }

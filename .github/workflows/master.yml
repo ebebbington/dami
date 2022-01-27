@@ -26,14 +26,14 @@ jobs:
           cd tests
           docker-compose up -d
           deno test --allow-net --allow-env --coverage=unit_cov unit
-          deno coverage --lcov unit_cov > unit.lcov
+          deno coverage --lcov unit_cov --exclude=tests > unit.lcov
 
       - name: Integration
         run: |
           cd tests
           docker-compose up -d
           deno test -A --coverage=integration_cov integration
-          deno coverage --lcov integration_cov > integration.lcov
+          deno coverage --lcov integration_cov --exclude=tests > integration.lcov
       
       - name: Upload Coverage
         uses: codecov/codecov-action@v1
