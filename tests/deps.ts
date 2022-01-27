@@ -1,1 +1,4 @@
-export { Rhum } from "https://deno.land/x/rhum@v1.1.12/mod.ts";
+export {
+  assertEquals,
+  assertThrows,
+} from "https://deno.land/std@0.122.0/testing/asserts.ts";
