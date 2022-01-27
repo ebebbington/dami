@@ -15,6 +15,9 @@
   <a href="https://sonarcloud.io/dashboard?id=ebebbington_dami">
     <img src="https://sonarcloud.io/api/project_badges/measure?project=ebebbington_dami&metric=alert_status">
   </a>
+  <a href="https://codecov.io/gh/ebebbington/dami">
+    <img src="https://codecov.io/gh/ebebbington/dami/branch/master/graph/badge.svg?token=MBVIGU64VW"/>
+  </a>
 </p>
 
 ---
