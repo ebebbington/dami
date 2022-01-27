@@ -24,8 +24,6 @@ interface IConfigs {
   certFile?: string;
 }
 
-let nextActionId = 0;
-
 type LogLevels = "error" | "info" | "log";
 
 export type Event = { [key: string]: string | number } & { Output?: string[] };
@@ -45,6 +43,8 @@ export class DAMI {
    * Constructor configs, to connect to the AMI
    */
   private readonly configs: IConfigs;
+
+  private nextActionId = 0
 
   /**
    * Used for constantly listen on events (such as Hangup)
@@ -72,7 +72,6 @@ export class DAMI {
    */
   constructor(configs: IConfigs = defaultConfigs) {
     this.configs = configs;
-    console.log(nextActionId);
   }
 
   /**
@@ -412,14 +411,14 @@ export class DAMI {
    * Creates the next action id for us to use when sending actions
    */
   private generateActionId(): number {
-    nextActionId++;
+    this.nextActionId++;
     if (
-      nextActionId === Number.MAX_SAFE_INTEGER ||
-      (nextActionId - 1) === Number.MAX_SAFE_INTEGER
+      this.nextActionId === Number.MAX_SAFE_INTEGER ||
+      (this.nextActionId - 1) === Number.MAX_SAFE_INTEGER
     ) {
-      nextActionId = 1;
+      this.nextActionId = 1;
     }
-    return nextActionId;
+    return this.nextActionId;
   }
 
   /**
