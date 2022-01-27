@@ -39,7 +39,7 @@ jobs:
         uses: codecov/codecov-action@v1
         with:
           name: dami
-          files: integration.lcov,unit.lcov
+          files: tests/integration.lcov,tests/unit.lcov
 
   linter:
     runs-on: ubuntu-latest
