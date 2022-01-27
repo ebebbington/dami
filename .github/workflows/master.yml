@@ -25,13 +25,21 @@ jobs:
         run: |
           cd tests
           docker-compose up -d
-          deno test --allow-net --allow-env unit
+          deno test --allow-net --allow-env --coverage=unit_cov unit
+          deno coverage --lcov unit_cov > unit.lcov
 
       - name: Integration
         run: |
           cd tests
           docker-compose up -d
-          deno test -A integration
+          deno test -A --coverage=integration_cov integration
+          deno coverage --lcov integration_cov > integration.lcov
+      
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v1
+        with:
+          name: dami
+          files: integration.lcov,unit.lcov
 
   linter:
     runs-on: ubuntu-latest
