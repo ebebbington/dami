@@ -198,7 +198,8 @@ export class DAMI {
     this.log(JSON.stringify(data), "info");
 
     // Construct data
-    data["ActionID"] = this.nextActionId++;
+    const actionId = this.nextActionId++;
+    data["ActionID"] = actionId;
     const message = this.formatAMIMessage(actionName, data);
 
     // Write message and wait for response
