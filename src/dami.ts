@@ -198,8 +198,7 @@ export class DAMI {
     this.log(JSON.stringify(data), "info");
 
     // Construct data
-    const actionId = this.generateActionId();
-    data["ActionID"] = actionId;
+    data["ActionID"] = this.nextActionId++;
     const message = this.formatAMIMessage(actionName, data);
 
     // Write message and wait for response
@@ -405,20 +404,6 @@ export class DAMI {
       }
     });
     return responseObject;
-  }
-
-  /**
-   * Creates the next action id for us to use when sending actions
-   */
-  private generateActionId(): number {
-    this.nextActionId++;
-    if (
-      this.nextActionId === Number.MAX_SAFE_INTEGER ||
-      (this.nextActionId - 1) === Number.MAX_SAFE_INTEGER
-    ) {
-      this.nextActionId = 1;
-    }
-    return this.nextActionId;
   }
 
   /**
