@@ -36,7 +36,7 @@ jobs:
           deno coverage --lcov integration_cov --exclude=tests > integration.lcov
       
       - name: Upload Coverage
-        uses: codecov/codecov-action@v2.1.0
+        uses: codecov/codecov-action@v3
         with:
           name: dami
           files: tests/integration.lcov,tests/unit.lcov
